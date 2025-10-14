@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AccessCode {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  valid         Boolean  @default(true)
+  role          Role     @default(Admin)
+  generatedAt   DateTime @default(now())
+  generatedById String
+  generatedBy   Admin    @relation(name: "AdminToCodeCreated", fields: [generatedById], references: [id])
+
+  usedBy Admin? @relation("AccessCodeToAdmin")
+}
+
+model Admin {
+  id               String      @id @default(uuid())
+  name             String
+  email            String      @unique
+  hash             String
+  refreshTokenHash String?
+  joinedAt         DateTime    @default(now())
+  role             Role
+  accessCodeId     String?     @unique
+  accessCode       AccessCode? @relation("AccessCodeToAdmin", fields: [accessCodeId], references: [id], onDelete: SetNull)
+  suspended        Boolean     @default(false)
+
+  // createdById String?
+  // createdBy   Admin?    @relation("AdminCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  // created     Admin[]   @relation("AdminCreatedBy")
+  codeGenerated AccessCode[] @relation(name: "AdminToCodeCreated")
+  products      Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  label       String
+  description String?
+  price       Decimal
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  available   Boolean  @default(true)
+
+  orderItems OrderItem[]
+  creatorId  String?
+  creator    Admin?      @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  customerEmail String
+  status        OrderStatus @default(PENDING)
+  orderedAt     DateTime    @default(now())
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  productId       String
+  quantity        Int      @default(1)
+  priceAtPurchase Decimal
+  createdAt       DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, productId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  CANCELLED
+}
+
+enum Role {
+  Superuser
+  TopAdmin
+  Admin
+}
