@@ -14,9 +14,10 @@ export class ResponseInterceptor implements NestInterceptor {
     const request = ctx.getRequest();
 
     return next.handle().pipe(
-      map((data) => ({
+      map((response) => ({
         success: true,
-        data,
+        message: response.message,
+        data: response.data,
         statusCode: ctx.getResponse().statusCode,
         timestamp: new Date().toISOString(),
         path: request.url,

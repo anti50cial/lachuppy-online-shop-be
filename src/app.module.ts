@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 // import { AppController } from './app.controller';
 // import { AppService } from './app.service';
-import { ProductsModule } from './products/products.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 // import { APP_INTERCEPTOR } from '@nestjs/core';
 // import { ResponseInterceptor } from './interceptors/response/response.interceptor';
+import { OrdersModule } from './orders/orders.module';
+import { DishesModule } from './dishes/dishes.module';
 
 @Module({
   imports: [
-    ProductsModule,
     AuthModule,
     JwtModule.registerAsync({
       global: true,
@@ -18,11 +18,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.getOrThrow<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: config.getOrThrow('JWT_EXPIRES_IN'),
-        },
+        // signOptions: {
+        //   expiresIn: config.getOrThrow('JWT_EXPIRES_IN'),
+        // },
       }),
     }),
+    OrdersModule,
+    DishesModule,
   ],
   // controllers: [AppController],
   providers: [

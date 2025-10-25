@@ -42,21 +42,30 @@ model Admin {
   // createdBy   Admin?    @relation("AdminCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   // created     Admin[]   @relation("AdminCreatedBy")
   codeGenerated AccessCode[] @relation(name: "AdminToCodeCreated")
-  products      Product[]
+  products      Dish[]
 }
 
-model Product {
-  id          String   @id @default(uuid())
-  label       String
+model Dish {
+  id          String      @id @default(uuid())
+  imgs        DishImage[]
+  name        String
   description String?
   price       Decimal
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  available   Boolean  @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  available   Boolean     @default(true)
+  dropped     Boolean     @default(false)
 
   orderItems OrderItem[]
   creatorId  String?
   creator    Admin?      @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+}
+
+model DishImage {
+  id       String @id @default(uuid())
+  location String @unique
+  dishId   String
+  dish     Dish   @relation(fields: [dishId], references: [id])
 }
 
 model Order {
@@ -76,17 +85,16 @@ model OrderItem {
   priceAtPurchase Decimal
   createdAt       DateTime @default(now())
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Dish  @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@unique([orderId, productId])
 }
 
 enum OrderStatus {
   PENDING
-  PAID
-  SHIPPED
-  CANCELLED
+  COMPLETED
+  DISMISSED
 }
 
 enum Role {

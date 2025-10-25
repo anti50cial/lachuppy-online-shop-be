@@ -21,19 +21,22 @@ export class AuthService implements OnModuleInit {
     private config: ConfigService,
   ) {}
 
-  async signJwt(data: JwtPayload) {
-    return await this.jwt.signAsync(data);
+  async signJwt(data: JwtPayload, expiry?: any) {
+    return await this.jwt.signAsync(
+      { sub: data.sub, email: data.email },
+      { expiresIn: expiry },
+    );
   }
 
   async validateUser(data: SignInDto): Promise<JwtPayload | null> {
     const user = await this.prisma.admin.findUnique({
       where: { email: data.email },
-      select: { id: true, hash: true, email: true },
+      select: { id: true, hash: true, email: true, role: true },
     });
     if (user) {
       const passwordVerified = await argon.verify(user.hash, data.password);
       if (passwordVerified) {
-        return { sub: user.id, email: user.email };
+        return { sub: user.id, email: user.email, role: user.role };
       }
     }
     return null;
@@ -67,7 +70,9 @@ export class AuthService implements OnModuleInit {
         }),
       ]);
 
-      return `Admin '${newUser.name}' created successfully, proceed to sign in`;
+      return {
+        message: `Admin '${newUser.name}' created successfully, proceed to sign in`,
+      };
     } catch (error) {
       console.log(error);
       throw new InternalServerErrorException(
