@@ -17,7 +17,7 @@ export class DishesService {
       const file = files[i];
       imgs.push({ location: file.filename });
     }
-    await this.prisma.dish.create({
+    const dish = await this.prisma.dish.create({
       data: {
         imgs: {
           createMany: { data: imgs },
@@ -27,14 +27,18 @@ export class DishesService {
         description: createDishDto.description,
         creatorId: user.sub,
       },
+      select: { name: true },
     });
-    return { message: `New dish created` };
+    return { message: `New dish '${dish.name}' created` };
   }
 
   async findAll() {
     const dishes = await this.prisma.dish.findMany({
       where: { dropped: false },
       omit: { dropped: true },
+      include: {
+        imgs: { select: { location: true } },
+      },
     });
     return { data: { dishes } };
   }

@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 // import { ResponseInterceptor } from './interceptors/response/response.interceptor';
 import { OrdersModule } from './orders/orders.module';
 import { DishesModule } from './dishes/dishes.module';
+import { AdminsModule } from './admins/admins.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { DishesModule } from './dishes/dishes.module';
     }),
     OrdersModule,
     DishesModule,
+    AdminsModule,
   ],
   // controllers: [AppController],
   providers: [

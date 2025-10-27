@@ -27,16 +27,16 @@ model AccessCode {
 }
 
 model Admin {
-  id               String      @id @default(uuid())
-  name             String
-  email            String      @unique
-  hash             String
-  refreshTokenHash String?
-  joinedAt         DateTime    @default(now())
-  role             Role
-  accessCodeId     String?     @unique
-  accessCode       AccessCode? @relation("AccessCodeToAdmin", fields: [accessCodeId], references: [id], onDelete: SetNull)
-  suspended        Boolean     @default(false)
+  id           String      @id @default(uuid())
+  name         String
+  email        String      @unique
+  hash         String
+  // refreshTokenHash String?
+  joinedAt     DateTime    @default(now())
+  role         Role
+  accessCodeId String?     @unique
+  accessCode   AccessCode? @relation("AccessCodeToAdmin", fields: [accessCodeId], references: [id], onDelete: SetNull)
+  suspended    Boolean     @default(false)
 
   // createdById String?
   // createdBy   Admin?    @relation("AdminCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
@@ -65,7 +65,7 @@ model DishImage {
   id       String @id @default(uuid())
   location String @unique
   dishId   String
-  dish     Dish   @relation(fields: [dishId], references: [id])
+  dish     Dish   @relation(fields: [dishId], references: [id], onDelete: Cascade)
 }
 
 model Order {

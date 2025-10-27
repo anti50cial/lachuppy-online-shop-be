@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   Req,
+  BadRequestException,
 } from '@nestjs/common';
 import { DishesService } from './dishes.service';
 import { CreateDishDto } from './dto/create-dish.dto';
@@ -27,7 +28,24 @@ export class DishesController {
   @UseGuards(JwtGuard)
   @UseInterceptors(
     FilesInterceptor('files', 10, {
-      // limits: {fieldSize},
+      fileFilter: (req, file, cb) => {
+        if (
+          [
+            'image/png',
+            'image/jpg',
+            'image/jpeg',
+            'image/gif',
+            'image/webp',
+          ].includes(file.mimetype.toLowerCase())
+        ) {
+          return cb(null, true);
+        } else {
+          return cb(
+            new BadRequestException('Filetype is not acceptable'),
+            false,
+          );
+        }
+      },
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, callback) => {
