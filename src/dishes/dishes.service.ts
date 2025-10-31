@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateDishDto } from './dto/create-dish.dto';
 import { UpdateDishDto } from './dto/update-dish.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -53,8 +53,19 @@ export class DishesService {
     return { data: { totalDishCount, availableDishCount } };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} dish`;
+  async findOne(id: string) {
+    const dish = await this.prisma.dish.findUnique({
+      where: { id, dropped: false },
+      omit: { creatorId: true },
+      include: {
+        imgs: { select: { location: true } },
+        creator: { select: { name: true } },
+      },
+    });
+    if (dish) {
+      return { data: { dish } };
+    }
+    throw new NotFoundException('Dish not found');
   }
 
   update(id: number, updateDishDto: UpdateDishDto) {

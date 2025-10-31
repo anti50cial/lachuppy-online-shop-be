@@ -80,7 +80,7 @@ export class DishesController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.dishesService.findOne(+id);
+    return this.dishesService.findOne(id);
   }
 
   @UseGuards(JwtGuard)
