@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateDishDto } from './dto/create-dish.dto';
 import { UpdateDishDto } from './dto/update-dish.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -37,7 +41,7 @@ export class DishesService {
       where: { dropped: false },
       omit: { dropped: true },
       include: {
-        imgs: { select: { location: true } },
+        imgs: { select: { location: true }, where: { dropped: false } },
       },
     });
     return { data: { dishes } };
@@ -53,8 +57,40 @@ export class DishesService {
     return { data: { totalDishCount, availableDishCount } };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} dish`;
+  async findOne(id: string) {
+    const dish = await this.prisma.dish.findUnique({
+      where: { id, dropped: false },
+      omit: { creatorId: true },
+      include: {
+        imgs: { omit: { dishId: true }, where: { dropped: false } },
+        creator: { select: { name: true } },
+      },
+    });
+    if (dish) {
+      return { data: { dish } };
+    }
+    throw new NotFoundException('Dish not found');
+  }
+
+  async deleteImg(id: string) {
+    const img = await this.prisma.dishImage.findUnique({
+      where: { id, dropped: false },
+    });
+    if (!img) {
+      throw new NotFoundException('Image not found');
+    }
+    const imgCount = await this.prisma.dishImage.count({
+      where: { dishId: img.dishId, dropped: false },
+    });
+
+    if (imgCount <= 1) {
+      throw new BadRequestException('Each dish must have at least one image.');
+    }
+    await this.prisma.dishImage.update({
+      where: { id },
+      data: { dropped: true },
+    });
+    return { message: 'Img deleted successfully.' };
   }
 
   update(id: number, updateDishDto: UpdateDishDto) {

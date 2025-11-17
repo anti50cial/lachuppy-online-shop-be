@@ -1,21 +1,13 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
-import { AuthService } from './auth.service';
-import type { AuthRequest } from 'src/app.models';
-import { LocalAuthGuard } from 'src/guards/local-auth/local-auth.guard';
-import { SignUpDto } from './dto/signup.dto';
-import type { Response } from 'express';
+import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtGuard } from 'src/guards/jwt/jwt.guard';
-import { AdminsService } from 'src/admins/admins.service';
 import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
+import { AdminsService } from 'src/admins/admins.service';
+import type { AuthRequest } from 'src/app.models';
+import { JwtGuard } from 'src/guards/jwt/jwt.guard';
+import { LocalAuthGuard } from 'src/guards/local-auth/local-auth.guard';
+import { AuthService } from './auth.service';
+import { SignUpDto } from './dto/signup.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -98,10 +90,21 @@ export class AuthController {
     const message = 'Session refreshed successfully';
     return { data, message };
   }
+  @UseGuards(JwtGuard)
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('access_token');
-    res.clearCookie('refresh_token');
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
+      sameSite: 'lax',
+      path: '/api',
+    });
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
+      sameSite: 'lax',
+      path: '/api',
+    });
     return { message: 'You are logged out' };
   }
 

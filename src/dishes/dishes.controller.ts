@@ -80,7 +80,13 @@ export class DishesController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.dishesService.findOne(+id);
+    return this.dishesService.findOne(id);
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('delete-img')
+  deleteImg(@Body() data: { id: string }) {
+    return this.dishesService.deleteImg(data.id);
   }
 
   @UseGuards(JwtGuard)
