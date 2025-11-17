@@ -84,6 +84,12 @@ export class DishesController {
   }
 
   @UseGuards(JwtGuard)
+  @Post('delete-img')
+  deleteImg(@Body() data: { id: string }) {
+    return this.dishesService.deleteImg(data.id);
+  }
+
+  @UseGuards(JwtGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateDishDto: UpdateDishDto) {
     return this.dishesService.update(+id, updateDishDto);

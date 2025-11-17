@@ -62,10 +62,11 @@ model Dish {
 }
 
 model DishImage {
-  id       String @id @default(uuid())
-  location String @unique
+  id       String  @id @default(uuid())
+  location String  @unique
   dishId   String
-  dish     Dish   @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  dropped  Boolean @default(false)
+  dish     Dish    @relation(fields: [dishId], references: [id], onDelete: Cascade)
 }
 
 model Order {
