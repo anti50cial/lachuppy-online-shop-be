@@ -90,14 +90,50 @@ export class DishesController {
   }
 
   @UseGuards(JwtGuard)
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      fileFilter: (req, file, cb) => {
+        if (
+          [
+            'image/png',
+            'image/jpg',
+            'image/jpeg',
+            'image/gif',
+            'image/webp',
+          ].includes(file.mimetype.toLowerCase())
+        ) {
+          return cb(null, true);
+        } else {
+          return cb(
+            new BadRequestException('Filetype is not acceptable'),
+            false,
+          );
+        }
+      },
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const randomName = Array(32)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          return callback(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+    }),
+  )
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDishDto: UpdateDishDto) {
-    return this.dishesService.update(+id, updateDishDto);
+  update(
+    @Param('id') id: string,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body() updateDishDto: UpdateDishDto,
+  ) {
+    return this.dishesService.update(id, files, updateDishDto);
   }
 
   @UseGuards(JwtGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.dishesService.remove(+id);
+    return this.dishesService.remove(id);
   }
 }

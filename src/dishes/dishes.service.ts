@@ -16,6 +16,10 @@ export class DishesService {
     createDishDto: CreateDishDto,
     user: JwtPayload,
   ) {
+    // console.log(files);
+    if (files.length == 0) {
+      throw new BadRequestException('Each dish must have at least one image');
+    }
     const imgs: { location: string }[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -74,7 +78,7 @@ export class DishesService {
 
   async deleteImg(id: string) {
     const img = await this.prisma.dishImage.findUnique({
-      where: { id, dropped: false },
+      where: { id, dropped: false, dish: { dropped: false } },
     });
     if (!img) {
       throw new NotFoundException('Image not found');
@@ -93,11 +97,47 @@ export class DishesService {
     return { message: 'Img deleted successfully.' };
   }
 
-  update(id: number, updateDishDto: UpdateDishDto) {
-    return `This action updates a #${id} dish`;
+  async update(
+    id: string,
+    files: Express.Multer.File[],
+    updateDishDto: UpdateDishDto,
+  ) {
+    const dish = await this.prisma.dish.findUnique({
+      where: { id, dropped: false },
+      include: { imgs: true },
+    });
+    if (!dish) {
+      throw new NotFoundException(
+        'Dish has either been deleted or does not exist.',
+      );
+    }
+    if (dish.imgs.length + files.length > 10) {
+      throw new BadRequestException(
+        'Each dish cannot have more than 10 images.',
+      );
+    }
+    const imgs: { location: string }[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      imgs.push({ location: file.filename });
+    }
+    await this.prisma.dish.update({
+      where: { id },
+      data: { imgs: { createMany: { data: imgs } }, ...updateDishDto },
+    });
+    return { message: 'Dish updated successfully.' };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} dish`;
+  async remove(id: string) {
+    const dish = await this.prisma.dish.findUnique({
+      where: { id, dropped: false },
+    });
+    if (!dish) {
+      throw new NotFoundException(
+        'Dish has either been deleted or does not exist.',
+      );
+    }
+    await this.prisma.dish.update({ where: { id }, data: { dropped: true } });
+    return { message: 'Dish deleted successfully.' };
   }
 }

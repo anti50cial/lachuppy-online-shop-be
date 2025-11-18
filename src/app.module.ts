@@ -13,6 +13,10 @@ import { AdminsModule } from './admins/admins.module';
 @Module({
   imports: [
     AuthModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],
