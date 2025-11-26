@@ -1,32 +1,26 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-} from '@nestjs/common';
-import { OrdersService } from './orders.service';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtGuard } from 'src/guards/jwt/jwt.guard';
+import { InitializePaymentDto } from './dto/initialize-payment.dto';
+import { OrdersService } from './orders.service';
 
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @UseGuards(JwtGuard)
-  @Post()
-  create(@Body() createOrderDto: CreateOrderDto) {
-    return this.ordersService.create(createOrderDto);
+  @Post('create')
+  create(@Body() initializePaymentDto: InitializePaymentDto) {
+    return this.ordersService.initialize(initializePaymentDto);
+  }
+
+  @Get('complete/:reference')
+  complete(@Param('reference') reference: string) {
+    return this.ordersService.complete(reference);
   }
 
   @UseGuards(JwtGuard)
-  @Get()
+  @Get('pending')
   findAll() {
-    return this.ordersService.findAll();
+    return this.ordersService.findPendingOrders();
   }
 
   @UseGuards(JwtGuard)
@@ -35,21 +29,21 @@ export class OrdersController {
     return this.ordersService.count();
   }
 
-  @UseGuards(JwtGuard)
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ordersService.findOne(+id);
-  }
+  // @UseGuards(JwtGuard)
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.ordersService.findOne(+id);
+  // }
 
-  @UseGuards(JwtGuard)
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-    return this.ordersService.update(+id, updateOrderDto);
-  }
+  // @UseGuards(JwtGuard)
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
+  //   return this.ordersService.update(+id, updateOrderDto);
+  // }
 
-  @UseGuards(JwtGuard)
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ordersService.remove(+id);
-  }
+  // @UseGuards(JwtGuard)
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.ordersService.remove(+id);
+  // }
 }

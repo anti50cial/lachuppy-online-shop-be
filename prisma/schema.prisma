@@ -70,10 +70,16 @@ model DishImage {
 }
 
 model Order {
-  id            String      @id @default(uuid())
-  customerEmail String
-  status        OrderStatus @default(PENDING)
-  orderedAt     DateTime    @default(now())
+  id              String      @id @default(uuid())
+  customerName    String
+  email           String
+  phone           String
+  deliveryAddress String
+  status          OrderStatus @default(PENDING)
+  orderedAt       DateTime    @default(now())
+  txreference     String      @unique
+  paid            Boolean     @default(false)
+  totalPrice      Decimal
 
   items OrderItem[]
 }

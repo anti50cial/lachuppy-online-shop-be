@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 // import { AppController } from './app.controller';
 // import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthModule } from './auth/auth.module';
 // import { APP_INTERCEPTOR } from '@nestjs/core';
 // import { ResponseInterceptor } from './interceptors/response/response.interceptor';
-import { OrdersModule } from './orders/orders.module';
 import { DishesModule } from './dishes/dishes.module';
-import { AdminsModule } from './admins/admins.module';
+import { OrdersModule } from './orders/orders.module';
+
+import { PaystackModule } from './paystack/paystack.module';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { AdminsModule } from './admins/admins.module';
     }),
     OrdersModule,
     DishesModule,
-    AdminsModule,
+    PaystackModule,
   ],
   // controllers: [AppController],
   providers: [

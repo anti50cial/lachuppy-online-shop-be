@@ -44,6 +44,7 @@ export class DishesService {
     const dishes = await this.prisma.dish.findMany({
       where: { dropped: false },
       omit: { dropped: true },
+      orderBy: { name: 'asc' },
       include: {
         imgs: { select: { location: true }, where: { dropped: false } },
       },
@@ -73,7 +74,9 @@ export class DishesService {
     if (dish) {
       return { data: { dish } };
     }
-    throw new NotFoundException('Dish not found');
+    throw new NotFoundException(
+      'Dish has either been deleted or does not exist.',
+    );
   }
 
   async deleteImg(id: string) {
@@ -94,7 +97,7 @@ export class DishesService {
       where: { id },
       data: { dropped: true },
     });
-    return { message: 'Img deleted successfully.' };
+    return { message: 'Dish image deleted successfully.' };
   }
 
   async update(
