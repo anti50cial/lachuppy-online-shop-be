@@ -74,7 +74,10 @@ export class OrdersService {
       throw new BadRequestException('An error occurred, try again.');
     }
 
-    return { data: res };
+    return {
+      data: { access_code: res.data.access_code },
+      message: res.message,
+    };
   }
 
   async complete(ref: string) {
@@ -84,7 +87,7 @@ export class OrdersService {
 
     if (!order) {
       throw new NotFoundException(
-        "Order with that transaction reference doesn't exist",
+        "Order with that transaction reference doesn't exist.",
       );
     }
 
@@ -95,7 +98,7 @@ export class OrdersService {
       transaction.data.amount !== Number(order.totalPrice) * 100
     ) {
       throw new BadRequestException(
-        'Payment could not be verified, contact admins or try again',
+        'Payment could not be verified, contact admins or try again.',
       );
     }
 
@@ -107,18 +110,31 @@ export class OrdersService {
     } catch (error) {
       console.log(error);
       throw new BadRequestException(
-        'Could not update your order, contact the admins',
+        'Could not update your order, contact the admins.',
       );
     }
-    return { data: transaction };
-    // return this.PaystackService.verify(ref);
+    return {
+      message: 'Payment verified, order has been saved successfully.',
+      data: { reference: transaction.data.reference },
+    };
   }
 
-  async findPendingOrders() {
+  async findUnfinishedOrders() {
     const orders = await this.prisma.order.findMany({
       where: {
-        status: 'PENDING',
+        OR: [
+          {
+            status: 'PENDING',
+          },
+          {
+            status: 'PROCESSING',
+          },
+        ],
         paid: true,
+      },
+      include: { items: true },
+      orderBy: {
+        orderedAt: 'asc',
       },
     });
     return { data: { orders } };
@@ -141,6 +157,30 @@ export class OrdersService {
     return {
       data: { totalOrderCount, pendingOrderCount, completedOrderCount },
     };
+  }
+
+  async markAs(id: string, status: 'PROCESSING' | 'COMPLETED' | 'DISMISSED') {
+    const order = await this.prisma.order.findUnique({ where: { id } });
+    if (!order) {
+      throw new NotFoundException('Order not found.');
+    }
+    if (
+      order.status === 'CANCELLED' ||
+      order.status === 'COMPLETED' ||
+      order.status === 'DISMISSED'
+    ) {
+      throw new BadRequestException(
+        'This order has either been cancelled or completed.',
+      );
+    }
+    if (status === 'COMPLETED' && order.status === 'PENDING') {
+      throw new BadRequestException(
+        'Order has to be processed before it can be completed',
+      );
+    }
+    await this.prisma.order.update({ where: { id }, data: { status } });
+    // Notify customers about status change
+    return { message: 'Order status changed successfully.' };
   }
 
   // findOne(id: number) {

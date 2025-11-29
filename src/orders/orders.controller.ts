@@ -20,13 +20,22 @@ export class OrdersController {
   @UseGuards(JwtGuard)
   @Get('pending')
   findAll() {
-    return this.ordersService.findPendingOrders();
+    return this.ordersService.findUnfinishedOrders();
   }
 
   @UseGuards(JwtGuard)
   @Get('count')
   count() {
     return this.ordersService.count();
+  }
+
+  @UseGuards(JwtGuard)
+  @Get(':id/mark-as/:status')
+  markOrder(
+    @Param('status') status: 'PROCESSING' | 'COMPLETED' | 'DISMISSED',
+    @Param('id') id: string,
+  ) {
+    return this.ordersService.markAs(id, status);
   }
 
   // @UseGuards(JwtGuard)

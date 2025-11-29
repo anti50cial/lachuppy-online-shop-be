@@ -100,8 +100,10 @@ model OrderItem {
 
 enum OrderStatus {
   PENDING
+  PROCESSING
   COMPLETED
   DISMISSED
+  CANCELLED
 }
 
 enum Role {
