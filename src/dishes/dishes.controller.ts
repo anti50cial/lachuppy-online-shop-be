@@ -73,6 +73,12 @@ export class DishesController {
   }
 
   @UseGuards(JwtGuard)
+  @Get('all')
+  adminFindAll() {
+    return this.dishesService.findAll(true);
+  }
+
+  @UseGuards(JwtGuard)
   @Get('count')
   count() {
     return this.dishesService.count();
@@ -81,6 +87,12 @@ export class DishesController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.dishesService.findOne(id);
+  }
+
+  @UseGuards(JwtGuard)
+  @Get(':id/admin')
+  adminFindOne(@Param('id') id: string) {
+    return this.dishesService.findOne(id, true);
   }
 
   @UseGuards(JwtGuard)

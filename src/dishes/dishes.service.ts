@@ -7,6 +7,7 @@ import { CreateDishDto } from './dto/create-dish.dto';
 import { UpdateDishDto } from './dto/update-dish.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtPayload } from 'src/app.models';
+import { Decimal } from 'generated/prisma/runtime/library';
 
 @Injectable()
 export class DishesService {
@@ -40,15 +41,37 @@ export class DishesService {
     return { message: `New dish '${dish.name}' created` };
   }
 
-  async findAll() {
-    const dishes = await this.prisma.dish.findMany({
-      where: { dropped: false },
-      omit: { dropped: true },
-      orderBy: { name: 'asc' },
-      include: {
-        imgs: { select: { location: true }, where: { dropped: false } },
-      },
-    });
+  async findAll(admin?: boolean) {
+    let dishes: ({ imgs: { location: string }[] } & {
+      id: string;
+      name: string;
+      description: string;
+      price: Decimal;
+      createdAt: Date;
+      updatedAt: Date;
+      available: boolean;
+      creatorId: string | null;
+    })[];
+
+    if (admin) {
+      dishes = await this.prisma.dish.findMany({
+        where: { dropped: false },
+        omit: { dropped: true },
+        orderBy: { name: 'asc' },
+        include: {
+          imgs: { select: { location: true }, where: { dropped: false } },
+        },
+      });
+    } else {
+      dishes = await this.prisma.dish.findMany({
+        where: { dropped: false, available: true },
+        omit: { dropped: true },
+        orderBy: { name: 'asc' },
+        include: {
+          imgs: { select: { location: true }, where: { dropped: false } },
+        },
+      });
+    }
     return { data: { dishes } };
   }
 
@@ -62,15 +85,46 @@ export class DishesService {
     return { data: { totalDishCount, availableDishCount } };
   }
 
-  async findOne(id: string) {
-    const dish = await this.prisma.dish.findUnique({
-      where: { id, dropped: false },
-      omit: { creatorId: true },
-      include: {
-        imgs: { omit: { dishId: true }, where: { dropped: false } },
-        creator: { select: { name: true } },
-      },
-    });
+  async findOne(id: string, admin?: boolean) {
+    let dish:
+      | ({
+          imgs: {
+            id: string;
+            dropped: boolean;
+            location: string;
+            dishId: string;
+          }[];
+          creator: { name: string } | null;
+        } & {
+          id: string;
+          name: string;
+          description: string;
+          price: Decimal;
+          createdAt: Date;
+          updatedAt: Date;
+          available: boolean;
+          dropped: boolean;
+        })
+      | null;
+    if (admin) {
+      dish = await this.prisma.dish.findUnique({
+        where: { id, dropped: false },
+        omit: { creatorId: true },
+        include: {
+          imgs: { omit: { dishId: true }, where: { dropped: false } },
+          creator: { select: { name: true } },
+        },
+      });
+    } else {
+      dish = await this.prisma.dish.findUnique({
+        where: { id, dropped: false, available: true },
+        omit: { creatorId: true },
+        include: {
+          imgs: { omit: { dishId: true }, where: { dropped: false } },
+          creator: { select: { name: true } },
+        },
+      });
+    }
     if (dish) {
       return { data: { dish } };
     }

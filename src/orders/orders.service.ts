@@ -44,7 +44,7 @@ export class OrdersService {
 
     for (const item of cartItems) {
       const dish = await this.prisma.dish.findUnique({
-        where: { id: item.id },
+        where: { id: item.id, available: true },
       });
       if (!dish) {
         throw new NotFoundException('One or more dishes do not exist.');
