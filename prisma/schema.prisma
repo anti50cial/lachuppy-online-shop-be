@@ -78,7 +78,6 @@ model Order {
   status          OrderStatus @default(PENDING)
   orderedAt       DateTime    @default(now())
   txreference     String      @unique
-  paid            Boolean     @default(false)
   totalPrice      Decimal
 
   items OrderItem[]
@@ -99,6 +98,7 @@ model OrderItem {
 }
 
 enum OrderStatus {
+  NOTYETPAID
   PENDING
   PROCESSING
   COMPLETED

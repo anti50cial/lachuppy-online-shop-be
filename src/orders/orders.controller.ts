@@ -19,8 +19,20 @@ export class OrdersController {
 
   @UseGuards(JwtGuard)
   @Get('pending')
-  findAll() {
-    return this.ordersService.findUnfinishedOrders();
+  findPendingOrders() {
+    return this.ordersService.findPendingOrders();
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('processing')
+  findProcessingOrders() {
+    return this.ordersService.findProcessingOrders();
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('history')
+  findOrdersHistory() {
+    return this.ordersService.findOrdersHistory();
   }
 
   @UseGuards(JwtGuard)

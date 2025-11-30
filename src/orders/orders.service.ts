@@ -105,7 +105,7 @@ export class OrdersService {
     try {
       await this.prisma.order.update({
         where: { txreference: ref },
-        data: { paid: true },
+        data: { status: 'PENDING' },
       });
     } catch (error) {
       console.log(error);
@@ -119,18 +119,10 @@ export class OrdersService {
     };
   }
 
-  async findUnfinishedOrders() {
+  async findPendingOrders() {
     const orders = await this.prisma.order.findMany({
       where: {
-        OR: [
-          {
-            status: 'PENDING',
-          },
-          {
-            status: 'PROCESSING',
-          },
-        ],
-        paid: true,
+        status: 'PENDING',
       },
       include: { items: true },
       orderBy: {
@@ -140,14 +132,48 @@ export class OrdersService {
     return { data: { orders } };
   }
 
+  async findProcessingOrders() {
+    const orders = await this.prisma.order.findMany({
+      where: {
+        status: 'PROCESSING',
+      },
+      include: { items: true },
+      orderBy: {
+        orderedAt: 'asc',
+      },
+    });
+    return { data: { orders } };
+  }
+
+  async findOrdersHistory() {
+    const orders = await this.prisma.order.findMany({
+      where: {
+        OR: [
+          { status: 'COMPLETED' },
+          { status: 'DISMISSED' },
+          { status: 'CANCELLED' },
+        ],
+      },
+      include: { items: true },
+      orderBy: {
+        orderedAt: 'desc',
+      },
+    });
+    return { data: { orders } };
+  }
+
   async count() {
     const totalOrderCount = await this.prisma.order.count({
-      where: { paid: true },
+      where: { NOT: { status: 'NOTYETPAID' } },
     });
     const pendingOrderCount = await this.prisma.order.count({
       where: {
         status: 'PENDING',
-        paid: true,
+      },
+    });
+    const processingOrderCount = await this.prisma.order.count({
+      where: {
+        status: 'PROCESSING',
       },
     });
     const completedOrderCount = await this.prisma.order.count({
@@ -155,7 +181,12 @@ export class OrdersService {
     });
 
     return {
-      data: { totalOrderCount, pendingOrderCount, completedOrderCount },
+      data: {
+        totalOrderCount,
+        pendingOrderCount,
+        processingOrderCount,
+        completedOrderCount,
+      },
     };
   }
 
@@ -163,6 +194,9 @@ export class OrdersService {
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) {
       throw new NotFoundException('Order not found.');
+    }
+    if (order.status === 'NOTYETPAID') {
+      throw new BadRequestException('Order has not been paid for');
     }
     if (
       order.status === 'CANCELLED' ||
