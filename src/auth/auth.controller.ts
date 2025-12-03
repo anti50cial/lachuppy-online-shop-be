@@ -108,8 +108,8 @@ export class AuthController {
     return { message: 'You are logged out' };
   }
 
-  @Post('signup')
-  signup(@Body() data: SignUpDto) {
-    return this.authService.createAdmin(data);
-  }
+  // @Post('signup')
+  // signup(@Body() data: SignUpDto) {
+  //   return this.authService.createAdmin(data);
+  // }
 }

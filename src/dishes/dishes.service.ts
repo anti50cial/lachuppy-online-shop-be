@@ -59,7 +59,11 @@ export class DishesService {
         omit: { dropped: true },
         orderBy: { name: 'asc' },
         include: {
-          imgs: { select: { location: true }, where: { dropped: false } },
+          imgs: {
+            select: { location: true },
+            where: { dropped: false },
+            take: 1,
+          },
         },
       });
     } else {
@@ -68,7 +72,11 @@ export class DishesService {
         omit: { dropped: true },
         orderBy: { name: 'asc' },
         include: {
-          imgs: { select: { location: true }, where: { dropped: false } },
+          imgs: {
+            select: { location: true },
+            where: { dropped: false },
+            take: 1,
+          },
         },
       });
     }
@@ -111,7 +119,10 @@ export class DishesService {
         where: { id, dropped: false },
         omit: { creatorId: true },
         include: {
-          imgs: { omit: { dishId: true }, where: { dropped: false } },
+          imgs: {
+            omit: { dishId: true, dropped: true },
+            where: { dropped: false },
+          },
           creator: { select: { name: true } },
         },
       });
@@ -120,7 +131,10 @@ export class DishesService {
         where: { id, dropped: false, available: true },
         omit: { creatorId: true },
         include: {
-          imgs: { omit: { dishId: true }, where: { dropped: false } },
+          imgs: {
+            omit: { dishId: true, dropped: true },
+            where: { dropped: false },
+          },
           creator: { select: { name: true } },
         },
       });
@@ -161,14 +175,14 @@ export class DishesService {
   ) {
     const dish = await this.prisma.dish.findUnique({
       where: { id, dropped: false },
-      include: { imgs: true },
+      include: { _count: { select: { imgs: { where: { dropped: false } } } } },
     });
     if (!dish) {
       throw new NotFoundException(
         'Dish has either been deleted or does not exist.',
       );
     }
-    if (dish.imgs.length + files.length > 10) {
+    if (dish._count.imgs + files.length > 10) {
       throw new BadRequestException(
         'Each dish cannot have more than 10 images.',
       );

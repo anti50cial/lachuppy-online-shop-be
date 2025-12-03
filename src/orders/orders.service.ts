@@ -36,9 +36,12 @@ export class OrdersService {
   async initialize(initializePaymentDto: InitializePaymentDto) {
     let totalPrice: number = 0;
     const cartItems = initializePaymentDto.cart;
+    if (cartItems.length === 0) {
+      throw new BadRequestException('Cart is empty, nothing to checkout.');
+    }
     const orderItems: {
       priceAtPurchase: number;
-      productId: string;
+      dishId: string;
       quantity: number;
     }[] = [];
 
@@ -51,7 +54,7 @@ export class OrdersService {
       }
       orderItems.push({
         priceAtPurchase: dish.price.toNumber(),
-        productId: item.id,
+        dishId: item.id,
         quantity: item.quantity,
       });
       totalPrice += dish.price.toNumber() * item.quantity;
@@ -81,6 +84,9 @@ export class OrdersService {
   }
 
   async complete(ref: string) {
+    if (ref.length === 0) {
+      throw new BadRequestException('Transaction is empty');
+    }
     const order = await this.prisma.order.findUnique({
       where: { txreference: ref },
     });
@@ -124,7 +130,7 @@ export class OrdersService {
       where: {
         status: 'PENDING',
       },
-      include: { items: true },
+      include: { _count: true },
       orderBy: {
         orderedAt: 'asc',
       },
@@ -137,7 +143,7 @@ export class OrdersService {
       where: {
         status: 'PROCESSING',
       },
-      include: { items: true },
+      include: { _count: true },
       orderBy: {
         orderedAt: 'asc',
       },
@@ -154,7 +160,7 @@ export class OrdersService {
           { status: 'CANCELLED' },
         ],
       },
-      include: { items: true },
+      include: { _count: true },
       orderBy: {
         orderedAt: 'desc',
       },
@@ -180,12 +186,17 @@ export class OrdersService {
       where: { status: 'COMPLETED' },
     });
 
+    const dismissedOrderCount = await this.prisma.order.count({
+      where: { status: 'DISMISSED' },
+    });
+
     return {
       data: {
         totalOrderCount,
         pendingOrderCount,
         processingOrderCount,
         completedOrderCount,
+        dismissedOrderCount,
       },
     };
   }
@@ -217,9 +228,25 @@ export class OrdersService {
     return { message: 'Order status changed successfully.' };
   }
 
-  // findOne(id: number) {
-  //   return `This action returns a #${id} order`;
-  // }
+  async findOne(id: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id, status: { not: 'NOTYETPAID' } },
+      include: {
+        items: {
+          include: {
+            dish: {
+              include: { imgs: { take: 1, select: { location: true } } },
+            },
+          },
+          omit: { orderId: true, dishId: true },
+        },
+      },
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found.');
+    }
+    return { data: { order } };
+  }
 
   // update(id: number, updateOrderDto: UpdateOrderDto) {
   //   return `This action updates a #${id} order`;

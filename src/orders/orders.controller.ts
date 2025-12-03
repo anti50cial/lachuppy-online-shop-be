@@ -50,6 +50,12 @@ export class OrdersController {
     return this.ordersService.markAs(id, status);
   }
 
+  @UseGuards(JwtGuard)
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.ordersService.findOne(id);
+  }
+
   // @UseGuards(JwtGuard)
   // @Get(':id')
   // findOne(@Param('id') id: string) {

@@ -5,7 +5,7 @@ export class CreateOrderDto extends InitializePaymentDto {
   totalPrice: number;
   orderItems: {
     priceAtPurchase: number;
-    productId: string;
+    dishId: string;
     quantity: number;
   }[];
 }

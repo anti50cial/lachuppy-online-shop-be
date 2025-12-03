@@ -1,16 +1,16 @@
 import {
-  BadRequestException,
+  // BadRequestException,
   Injectable,
-  InternalServerErrorException,
+  // InternalServerErrorException,
   OnModuleInit,
-  UnauthorizedException,
+  // UnauthorizedException,
 } from '@nestjs/common';
 import { SignInDto } from './dto/signin.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as argon from 'argon2';
 import { JwtPayload } from 'src/app.models';
 import { JwtService } from '@nestjs/jwt';
-import { SignUpDto } from './dto/signup.dto';
+// import { SignUpDto } from './dto/signup.dto';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -41,45 +41,45 @@ export class AuthService implements OnModuleInit {
     }
     return null;
   }
-  async createAdmin(data: SignUpDto) {
-    const { accessCode, email, name, password, cpassword } = data;
-    const verifiedAccessCode = await this.prisma.accessCode.findUnique({
-      where: {
-        code: accessCode,
-        valid: true,
-      },
-    });
-    if (cpassword !== password) {
-      throw new BadRequestException('Passwords do not match');
-    }
-    if (!verifiedAccessCode) {
-      throw new UnauthorizedException(
-        'Invalid access code provided, contact admins!',
-      );
-    }
-    const hash = await argon.hash(password, { type: argon.argon2id });
-    try {
-      const [newUser] = await this.prisma.$transaction([
-        this.prisma.admin.create({
-          data: { email, name, hash, role: 'Admin' },
-          select: { name: true, email: true },
-        }),
-        this.prisma.accessCode.update({
-          where: { code: verifiedAccessCode.code },
-          data: { valid: true },
-        }),
-      ]);
+  // async createAdmin(data: SignUpDto) {
+  //   const { accessCode, email, name, password, cpassword } = data;
+  //   const verifiedAccessCode = await this.prisma.accessCode.findUnique({
+  //     where: {
+  //       code: accessCode,
+  //       valid: true,
+  //     },
+  //   });
+  //   if (cpassword !== password) {
+  //     throw new BadRequestException('Passwords do not match');
+  //   }
+  //   if (!verifiedAccessCode) {
+  //     throw new UnauthorizedException(
+  //       'Invalid access code provided, contact admins!',
+  //     );
+  //   }
+  //   const hash = await argon.hash(password, { type: argon.argon2id });
+  //   try {
+  //     const [newUser] = await this.prisma.$transaction([
+  //       this.prisma.admin.create({
+  //         data: { email, name, hash, role: 'Admin' },
+  //         select: { name: true, email: true },
+  //       }),
+  //       this.prisma.accessCode.update({
+  //         where: { code: verifiedAccessCode.code },
+  //         data: { valid: true },
+  //       }),
+  //     ]);
 
-      return {
-        message: `Admin '${newUser.name}' created successfully, proceed to sign in`,
-      };
-    } catch (error) {
-      console.log(error);
-      throw new InternalServerErrorException(
-        'Could not create new admin, contact admins',
-      );
-    }
-  }
+  //     return {
+  //       message: `Admin '${newUser.name}' created successfully, proceed to sign in`,
+  //     };
+  //   } catch (error) {
+  //     console.log(error);
+  //     throw new InternalServerErrorException(
+  //       'Could not create new admin, contact admins',
+  //     );
+  //   }
+  // }
 
   async onModuleInit() {
     const userCount = await this.prisma.admin.count();
