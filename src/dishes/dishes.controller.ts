@@ -20,12 +20,13 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import type { AuthRequest } from 'src/app.models';
+import { SuspensionAccessGuard } from 'src/guards/suspension-access/suspension-access.guard';
 
 @Controller('dishes')
 export class DishesController {
   constructor(private readonly dishesService: DishesService) {}
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       fileFilter: (req, file, cb) => {
@@ -72,13 +73,13 @@ export class DishesController {
     return this.dishesService.findAll();
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Get('all')
   adminFindAll() {
     return this.dishesService.findAll(true);
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Get('count')
   count() {
     return this.dishesService.count();
@@ -89,19 +90,19 @@ export class DishesController {
     return this.dishesService.findOne(id);
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Get(':id/admin')
   adminFindOne(@Param('id') id: string) {
     return this.dishesService.findOne(id, true);
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Post('delete-img')
   deleteImg(@Body() data: { id: string }) {
     return this.dishesService.deleteImg(data.id);
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       fileFilter: (req, file, cb) => {
@@ -143,7 +144,7 @@ export class DishesController {
     return this.dishesService.update(id, files, updateDishDto);
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.dishesService.remove(id);

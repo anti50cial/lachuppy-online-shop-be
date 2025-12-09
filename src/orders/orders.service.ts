@@ -132,7 +132,7 @@ export class OrdersService {
       },
       include: { _count: true },
       orderBy: {
-        orderedAt: 'asc',
+        orderedAt: 'desc',
       },
     });
     return { data: { orders } };
@@ -145,7 +145,7 @@ export class OrdersService {
       },
       include: { _count: true },
       orderBy: {
-        orderedAt: 'asc',
+        orderedAt: 'desc',
       },
     });
     return { data: { orders } };
@@ -224,7 +224,7 @@ export class OrdersService {
       );
     }
     await this.prisma.order.update({ where: { id }, data: { status } });
-    // Notify customers about status change
+    // Notify customers about status change via email
     return { message: 'Order status changed successfully.' };
   }
 
@@ -236,6 +236,7 @@ export class OrdersService {
           include: {
             dish: {
               include: { imgs: { take: 1, select: { location: true } } },
+              omit: { dropped: true },
             },
           },
           omit: { orderId: true, dishId: true },

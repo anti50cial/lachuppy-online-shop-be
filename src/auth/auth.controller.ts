@@ -1,19 +1,28 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  NotFoundException,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
-import { AdminsService } from 'src/admins/admins.service';
 import type { AuthRequest } from 'src/app.models';
 import { JwtGuard } from 'src/guards/jwt/jwt.guard';
 import { LocalAuthGuard } from 'src/guards/local-auth/local-auth.guard';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly adminService: AdminsService,
+    private readonly prisma: PrismaService,
     private readonly config: ConfigService,
   ) {}
 
@@ -23,6 +32,11 @@ export class AuthController {
     @Req() request: AuthRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
+    if (request.user.suspended) {
+      throw new UnauthorizedException(
+        'Your account has been suspended, contact the admins',
+      );
+    }
     const access_token = await this.authService.signJwt(
       request.user,
       this.config.getOrThrow('JWT_EXPIRES_IN'),
@@ -79,7 +93,14 @@ export class AuthController {
       sameSite: 'lax',
       path: '/api',
     });
-    const user = await this.adminService.findOne(request.user.sub);
+    const user = await this.prisma.admin.findUnique({
+      where: { id: request.user.sub },
+    });
+    if (!user) {
+      throw new NotFoundException(
+        'Profile not found, try contacting the admins',
+      );
+    }
     const data = {
       user: {
         id: user.id,
@@ -108,8 +129,8 @@ export class AuthController {
     return { message: 'You are logged out' };
   }
 
-  // @Post('signup')
-  // signup(@Body() data: SignUpDto) {
-  //   return this.authService.createAdmin(data);
-  // }
+  @Post('signup')
+  signup(@Body() data: SignUpDto) {
+    return this.authService.createAdmin(data);
+  }
 }

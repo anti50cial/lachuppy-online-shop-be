@@ -47,16 +47,18 @@ export class DishesService {
       name: string;
       description: string;
       price: Decimal;
-      createdAt: Date;
-      updatedAt: Date;
-      available: boolean;
-      creatorId: string | null;
     })[];
 
     if (admin) {
       dishes = await this.prisma.dish.findMany({
         where: { dropped: false },
-        omit: { dropped: true },
+        omit: {
+          dropped: true,
+          creatorId: true,
+          createdAt: true,
+          updatedAt: true,
+          available: true,
+        },
         orderBy: { name: 'asc' },
         include: {
           imgs: {
@@ -69,7 +71,13 @@ export class DishesService {
     } else {
       dishes = await this.prisma.dish.findMany({
         where: { dropped: false, available: true },
-        omit: { dropped: true },
+        omit: {
+          dropped: true,
+          creatorId: true,
+          createdAt: true,
+          updatedAt: true,
+          available: true,
+        },
         orderBy: { name: 'asc' },
         include: {
           imgs: {
@@ -80,6 +88,7 @@ export class DishesService {
         },
       });
     }
+    console.log(dishes[1].imgs);
     return { data: { dishes } };
   }
 

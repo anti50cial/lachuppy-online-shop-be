@@ -14,17 +14,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// model AccessCode {
-//   id            String   @id @default(uuid())
-//   code          String   @unique
-//   valid         Boolean  @default(true)
-//   role          Role     @default(Admin)
-//   generatedAt   DateTime @default(now())
-//   generatedById String
-//   generatedBy   Admin    @relation(name: "AdminToCodeCreated", fields: [generatedById], references: [id])
+model SignupCode {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  valid       Boolean  @default(true)
+  role        Role     @default(Admin)
+  generatedAt DateTime @default(now())
 
-//   usedBy Admin? @relation("AccessCodeToAdmin")
-// }
+  generatorId String
+  generatedBy Admin  @relation(name: "AdminToSignupCodeCreated", fields: [generatorId], references: [id])
+  usedBy      Admin? @relation("SignupCodeToAdmin")
+}
 
 model Admin {
   id        String   @id @default(uuid())
@@ -33,16 +33,13 @@ model Admin {
   hash      String
   // refreshTokenHash String?
   joinedAt  DateTime @default(now())
-  role      Role
-  // accessCodeId String?     @unique
-  // accessCode   AccessCode? @relation("AccessCodeToAdmin", fields: [accessCodeId], references: [id], onDelete: SetNull)
   suspended Boolean  @default(false)
+  role      Role
 
-  createdById String?
-  createdBy   Admin?  @relation("AdminCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  created     Admin[] @relation("AdminCreatedBy")
-  // codeGenerated AccessCode[] @relation(name: "AdminToCodeCreated")
-  dishs       Dish[]
+  signupCodeId         String?      @unique
+  signupCode           SignupCode?  @relation("SignupCodeToAdmin", fields: [signupCodeId], references: [id], onDelete: SetNull)
+  signupCodesGenerated SignupCode[] @relation(name: "AdminToSignupCodeCreated")
+  dishes               Dish[]
 }
 
 model Dish {

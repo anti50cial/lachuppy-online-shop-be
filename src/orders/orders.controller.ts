@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtGuard } from 'src/guards/jwt/jwt.guard';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
 import { OrdersService } from './orders.service';
+import { SuspensionAccessGuard } from 'src/guards/suspension-access/suspension-access.guard';
 
 @Controller('orders')
 export class OrdersController {
@@ -17,31 +18,31 @@ export class OrdersController {
     return this.ordersService.complete(reference);
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Get('pending')
   findPendingOrders() {
     return this.ordersService.findPendingOrders();
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Get('processing')
   findProcessingOrders() {
     return this.ordersService.findProcessingOrders();
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Get('history')
   findOrdersHistory() {
     return this.ordersService.findOrdersHistory();
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Get('count')
   count() {
     return this.ordersService.count();
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Get(':id/mark-as/:status')
   markOrder(
     @Param('status') status: 'PROCESSING' | 'COMPLETED' | 'DISMISSED',
@@ -50,25 +51,25 @@ export class OrdersController {
     return this.ordersService.markAs(id, status);
   }
 
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);
   }
 
-  // @UseGuards(JwtGuard)
+  // @UseGuards(JwtGuard, SuspensionAccessGuard)
   // @Get(':id')
   // findOne(@Param('id') id: string) {
   //   return this.ordersService.findOne(+id);
   // }
 
-  // @UseGuards(JwtGuard)
+  // @UseGuards(JwtGuard, SuspensionAccessGuard)
   // @Patch(':id')
   // update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
   //   return this.ordersService.update(+id, updateOrderDto);
   // }
 
-  // @UseGuards(JwtGuard)
+  // @UseGuards(JwtGuard, SuspensionAccessGuard)
   // @Delete(':id')
   // remove(@Param('id') id: string) {
   //   return this.ordersService.remove(+id);
