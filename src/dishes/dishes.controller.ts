@@ -21,12 +21,16 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import type { AuthRequest } from 'src/app.models';
 import { SuspensionAccessGuard } from 'src/guards/suspension-access/suspension-access.guard';
+import { PermissionsGuard } from 'src/guards/permissions/permissions.guard';
+import { PERMISSIONS } from 'src/auth/permissions';
+import { HasPermission } from 'src/decorators/has-permission/has-permission.decorator';
 
 @Controller('dishes')
 export class DishesController {
   constructor(private readonly dishesService: DishesService) {}
 
-  @UseGuards(JwtGuard, SuspensionAccessGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
+  @HasPermission(PERMISSIONS.CREATE_DISHES)
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       fileFilter: (req, file, cb) => {
@@ -96,13 +100,15 @@ export class DishesController {
     return this.dishesService.findOne(id, true);
   }
 
-  @UseGuards(JwtGuard, SuspensionAccessGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
+  @HasPermission(PERMISSIONS.UPDATE_DISHES)
   @Post('delete-img')
   deleteImg(@Body() data: { id: string }) {
     return this.dishesService.deleteImg(data.id);
   }
 
-  @UseGuards(JwtGuard, SuspensionAccessGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
+  @HasPermission(PERMISSIONS.UPDATE_DISHES)
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       fileFilter: (req, file, cb) => {
@@ -144,7 +150,8 @@ export class DishesController {
     return this.dishesService.update(id, files, updateDishDto);
   }
 
-  @UseGuards(JwtGuard, SuspensionAccessGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
+  @HasPermission(PERMISSIONS.DROP_DISHES)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.dishesService.remove(id);

@@ -3,37 +3,45 @@ import {
   Delete,
   Get,
   Param,
+  Req,
   Request,
   UseGuards,
 } from '@nestjs/common';
 import type { AuthRequest } from 'src/app.models';
+import { PERMISSIONS } from 'src/auth/permissions';
+import { HasPermission } from 'src/decorators/has-permission/has-permission.decorator';
 import { JwtGuard } from 'src/guards/jwt/jwt.guard';
+import { PermissionsGuard } from 'src/guards/permissions/permissions.guard';
 import { SuspensionAccessGuard } from 'src/guards/suspension-access/suspension-access.guard';
 import { AdminsService } from './admins.service';
-import { RolesGuard } from 'src/guards/roles/roles.guard';
-import { Roles } from 'src/decorators/roles/roles.decorator';
 
-@UseGuards(JwtGuard, SuspensionAccessGuard, RolesGuard)
+@UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
 @Controller('admins')
 export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}
 
-  @Roles('Superuser', 'TopAdmin')
-  @Get('generate-signup-code')
-  generate(@Request() req: AuthRequest) {
-    return this.adminsService.generate(req.user);
-  }
-
-  @Roles('Superuser', 'TopAdmin')
   @Get()
+  @HasPermission(PERMISSIONS.MANAGE_ADMINS)
   findAll(@Request() req: AuthRequest) {
     return this.adminsService.findAll(req.user);
   }
 
-  @Roles('Superuser', 'TopAdmin')
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.adminsService.findOne(id);
+  @HasPermission(PERMISSIONS.MANAGE_ADMINS)
+  findOne(@Param('id') id: string, @Req() req: AuthRequest) {
+    return this.adminsService.findOne(req.user, id);
+  }
+
+  @Get('suspend/:id')
+  @HasPermission(PERMISSIONS.MANAGE_ADMINS)
+  suspend(@Param('id') id: string) {
+    return this.adminsService.suspend(id);
+  }
+
+  @Get('restore/:id')
+  @HasPermission(PERMISSIONS.MANAGE_ADMINS)
+  restore(@Param('id') id: string) {
+    return this.adminsService.restore(id);
   }
 
   // @Patch(':id')
@@ -42,6 +50,7 @@ export class AdminsController {
   // }
 
   @Delete(':id')
+  @HasPermission(PERMISSIONS.MANAGE_ADMINS)
   remove(@Param('id') id: string) {
     return this.adminsService.remove(+id);
   }

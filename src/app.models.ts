@@ -1,4 +1,5 @@
 import { Request } from 'express';
+import { PermissionType } from './auth/permissions';
 
 // export interface ResponseBody<T = undefined> {
 //   success: boolean;
@@ -9,7 +10,8 @@ import { Request } from 'express';
 export interface JwtPayload {
   sub: string;
   email: string;
-  role: string;
+  permissions: PermissionType[];
+  isSystem?: boolean;
   suspended: boolean;
 }
 export interface AuthRequest extends Request {

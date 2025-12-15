@@ -5,13 +5,14 @@ import {
   OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
-import { SignInDto } from './dto/signin.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import * as argon from 'argon2';
 import { JwtPayload } from 'src/app.models';
-import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { SignInDto } from './dto/signin.dto';
 import { SignUpDto } from './dto/signup.dto';
-import { ConfigService } from '@nestjs/config';
+import { PermissionType } from './permissions';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -23,7 +24,13 @@ export class AuthService implements OnModuleInit {
 
   async signJwt(data: JwtPayload, expiry?: any) {
     return await this.jwt.signAsync(
-      { sub: data.sub, email: data.email, role: data.role },
+      {
+        sub: data.sub,
+        email: data.email,
+        permissions: data.permissions,
+        isSystem: data.isSystem ? data.isSystem : undefined,
+      },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       { expiresIn: expiry },
     );
   }
@@ -35,8 +42,9 @@ export class AuthService implements OnModuleInit {
         id: true,
         hash: true,
         email: true,
-        role: true,
         suspended: true,
+        permissions: true,
+        isSystem: true,
       },
     });
     if (user) {
@@ -45,8 +53,9 @@ export class AuthService implements OnModuleInit {
         return {
           sub: user.id,
           email: user.email,
-          role: user.role,
           suspended: user.suspended,
+          permissions: user.permissions as PermissionType[],
+          isSystem: user.isSystem ? user.isSystem : undefined,
         };
       }
     }
@@ -54,17 +63,19 @@ export class AuthService implements OnModuleInit {
   }
 
   async createAdmin(data: SignUpDto) {
-    const { accessCode, email, name, password, cpassword } = data;
-    const verifiedAccessCode = await this.prisma.signupCode.findUnique({
+    const { keyCard, email, name, password, cpassword } = data;
+    const verifiedKeyCard = await this.prisma.keyCard.findUnique({
       where: {
-        code: accessCode,
-        valid: true,
+        code: keyCard,
+        isUsed: false,
+        isValid: true,
       },
     });
+
     if (cpassword !== password) {
       throw new BadRequestException('Passwords do not match');
     }
-    if (!verifiedAccessCode) {
+    if (!verifiedKeyCard) {
       throw new UnauthorizedException(
         'Invalid access code provided, contact admins!',
       );
@@ -73,12 +84,18 @@ export class AuthService implements OnModuleInit {
     try {
       const [newUser] = await this.prisma.$transaction([
         this.prisma.admin.create({
-          data: { email, name, hash, role: 'Admin' },
+          data: {
+            email,
+            name,
+            hash,
+            permissions: verifiedKeyCard.permissions,
+            keyCard: { connect: { id: verifiedKeyCard.id } },
+          },
           select: { name: true, email: true },
         }),
-        this.prisma.signupCode.update({
-          where: { code: verifiedAccessCode.code },
-          data: { valid: true },
+        this.prisma.keyCard.update({
+          where: { code: verifiedKeyCard.code },
+          data: { isUsed: true },
         }),
       ]);
 
@@ -102,7 +119,7 @@ export class AuthService implements OnModuleInit {
         { type: argon.argon2id },
       );
       const superUser = await this.prisma.admin.create({
-        data: { name: 'SYSTEM SUPER USER', email, hash, role: 'Superuser' },
+        data: { name: 'SYSTEM', email, hash, isSystem: true },
         select: { name: true },
       });
       if (superUser) {

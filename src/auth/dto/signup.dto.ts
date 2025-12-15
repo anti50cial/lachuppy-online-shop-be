@@ -1,10 +1,8 @@
 import { IsEmail, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
 
 export class SignUpDto {
-  @MaxLength(10)
-  @MinLength(10)
   @IsNotEmpty()
-  accessCode: string;
+  keyCard: string;
   @MaxLength(20)
   @MinLength(3)
   @IsNotEmpty()

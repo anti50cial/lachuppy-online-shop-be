@@ -3,6 +3,9 @@ import { JwtGuard } from 'src/guards/jwt/jwt.guard';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
 import { OrdersService } from './orders.service';
 import { SuspensionAccessGuard } from 'src/guards/suspension-access/suspension-access.guard';
+import { PermissionsGuard } from 'src/guards/permissions/permissions.guard';
+import { HasPermission } from 'src/decorators/has-permission/has-permission.decorator';
+import { PERMISSIONS } from 'src/auth/permissions';
 
 @Controller('orders')
 export class OrdersController {
@@ -18,19 +21,22 @@ export class OrdersController {
     return this.ordersService.complete(reference);
   }
 
-  @UseGuards(JwtGuard, SuspensionAccessGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
+  @HasPermission(PERMISSIONS.VIEW_ORDERS)
   @Get('pending')
   findPendingOrders() {
     return this.ordersService.findPendingOrders();
   }
 
-  @UseGuards(JwtGuard, SuspensionAccessGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
+  @HasPermission(PERMISSIONS.VIEW_ORDERS)
   @Get('processing')
   findProcessingOrders() {
     return this.ordersService.findProcessingOrders();
   }
 
-  @UseGuards(JwtGuard, SuspensionAccessGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
+  @HasPermission(PERMISSIONS.VIEW_ORDERS)
   @Get('history')
   findOrdersHistory() {
     return this.ordersService.findOrdersHistory();
@@ -42,7 +48,8 @@ export class OrdersController {
     return this.ordersService.count();
   }
 
-  @UseGuards(JwtGuard, SuspensionAccessGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
+  @HasPermission(PERMISSIONS.MODIFY_ORDERS_STATUS)
   @Get(':id/mark-as/:status')
   markOrder(
     @Param('status') status: 'PROCESSING' | 'COMPLETED' | 'DISMISSED',
@@ -51,7 +58,8 @@ export class OrdersController {
     return this.ordersService.markAs(id, status);
   }
 
-  @UseGuards(JwtGuard, SuspensionAccessGuard)
+  @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
+  @HasPermission(PERMISSIONS.VIEW_ORDERS)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);

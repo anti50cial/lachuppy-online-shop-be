@@ -20,6 +20,9 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
+      forbidUnknownValues: true,
+      stopAtFirstError: true,
+      whitelist: true,
     }),
   );
   app.useGlobalInterceptors(new ResponseInterceptor());

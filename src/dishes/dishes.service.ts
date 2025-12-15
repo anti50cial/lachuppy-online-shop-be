@@ -7,7 +7,7 @@ import { CreateDishDto } from './dto/create-dish.dto';
 import { UpdateDishDto } from './dto/update-dish.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtPayload } from 'src/app.models';
-import { Decimal } from 'generated/prisma/runtime/library';
+import { Decimal } from '@prisma/client/runtime/client';
 
 @Injectable()
 export class DishesService {
@@ -88,7 +88,6 @@ export class DishesService {
         },
       });
     }
-    console.log(dishes[1].imgs);
     return { data: { dishes } };
   }
 

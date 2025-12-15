@@ -47,7 +47,8 @@ export class AuthController {
       user: {
         id: request.user.sub,
         email: request.user.email,
-        role: request.user.role,
+        permissions: request.user.permissions,
+        isSystem: request.user.isSystem ? request.user.isSystem : undefined,
       },
     };
     res.cookie('access_token', access_token, {
@@ -105,7 +106,8 @@ export class AuthController {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
+        permissions: user.permissions,
+        isSystem: user.isSystem ? user.isSystem : undefined,
       },
     };
     const message = 'Session refreshed successfully';

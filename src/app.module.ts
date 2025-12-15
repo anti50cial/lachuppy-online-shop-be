@@ -8,6 +8,7 @@ import { OrdersModule } from './orders/orders.module';
 
 import { PaystackModule } from './paystack/paystack.module';
 import { AdminsModule } from './admins/admins.module';
+import { KeyCardsModule } from './key-cards/key-cards.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AdminsModule } from './admins/admins.module';
     DishesModule,
     PaystackModule,
     AdminsModule,
+    KeyCardsModule,
   ],
   // controllers: [AppController],
 })
