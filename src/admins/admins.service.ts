@@ -6,7 +6,6 @@ import {
 import { JwtPayload } from 'src/app.models';
 import { PrismaService } from 'src/prisma/prisma.service';
 // import { UpdateAdminDto } from './dto/update-admin.dto';
-// import { addMinutes } from 'date-fns';
 
 @Injectable()
 export class AdminsService {

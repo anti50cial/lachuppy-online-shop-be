@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsEmail,
   IsNotEmpty,
   IsPhoneNumber,
@@ -23,6 +24,7 @@ export class InitializePaymentDto {
   @MinLength(10)
   @IsNotEmpty()
   address: string;
+  @IsArray()
   cart: {
     id: string;
     quantity: number;
