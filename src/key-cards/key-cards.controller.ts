@@ -22,19 +22,19 @@ export class KeyCardsController {
   constructor(private readonly keyCardsService: KeyCardsService) {}
 
   @Post('generate')
-  @HasPermission(PERMISSIONS.MANAGE_SIGNUP_CODES)
+  @HasPermission(PERMISSIONS.MANAGE_KEYCARDS)
   generate(@Request() req: AuthRequest, @Body() data: CreateKeycardDto) {
     return this.keyCardsService.generate(req.user, data);
   }
 
   @Get()
-  @HasPermission(PERMISSIONS.MANAGE_SIGNUP_CODES)
+  @HasPermission(PERMISSIONS.MANAGE_KEYCARDS)
   getKeycards() {
     return this.keyCardsService.getKeycards();
   }
 
   @Get('possible-permissions')
-  @HasPermission(PERMISSIONS.MANAGE_SIGNUP_CODES)
+  @HasPermission(PERMISSIONS.MANAGE_KEYCARDS)
   getPossiblePermissions(@Request() req: AuthRequest) {
     return this.keyCardsService.getPossiblePermissions(req.user);
   }

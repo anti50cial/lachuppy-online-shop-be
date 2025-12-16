@@ -1,16 +1,16 @@
 export const PERMISSIONS = {
-  MANAGE_SIGNUP_CODES: 'manage_keycards',
+  MANAGE_KEYCARDS: 'manage_keycards',
   MANAGE_ADMINS: 'manage_admins',
   VIEW_AUDIT_LOGS: 'view_audit_logs',
   CREATE_DISHES: 'create_dishes',
   UPDATE_DISHES: 'update_dishes',
   DROP_DISHES: 'drop_dishes',
-  MANAGE_ORDERS_STATUS: 'manage_orders',
+  MANAGE_ORDERS: 'manage_orders',
 } as const;
 
 export const PERMISSION_DETAILS: { key: PermissionType; label: string }[] = [
   {
-    key: PERMISSIONS.MANAGE_SIGNUP_CODES,
+    key: PERMISSIONS.MANAGE_KEYCARDS,
     label: 'Generate and invalidate access codes for new admins.',
   },
   {
@@ -34,7 +34,7 @@ export const PERMISSION_DETAILS: { key: PermissionType; label: string }[] = [
     label: 'Delete dishes.',
   },
   {
-    key: PERMISSIONS.MANAGE_ORDERS_STATUS,
+    key: PERMISSIONS.MANAGE_ORDERS,
     label: 'View and modify order status.',
   },
 ];

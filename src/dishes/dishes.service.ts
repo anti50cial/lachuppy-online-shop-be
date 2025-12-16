@@ -102,26 +102,23 @@ export class DishesService {
   }
 
   async findOne(id: string, admin?: boolean) {
-    let dish:
-      | ({
-          imgs: {
-            id: string;
-            dropped: boolean;
-            location: string;
-            dishId: string;
-          }[];
-          creator: { name: string } | null;
-        } & {
-          id: string;
-          name: string;
-          description: string;
-          price: Decimal;
-          createdAt: Date;
-          updatedAt: Date;
-          available: boolean;
-          dropped: boolean;
-        })
-      | null;
+    let dish: {
+      imgs: {
+        id: string;
+        dropped: boolean;
+        location: string;
+        dishId: string;
+      }[];
+      creator: { name: string } | null;
+      id: string;
+      name: string;
+      description: string;
+      price: Decimal;
+      createdAt: Date;
+      updatedAt: Date;
+      available: boolean;
+      dropped: boolean;
+    } | null;
     if (admin) {
       dish = await this.prisma.dish.findUnique({
         where: { id, dropped: false },
@@ -147,12 +144,12 @@ export class DishesService {
         },
       });
     }
-    if (dish) {
-      return { data: { dish } };
+    if (!dish) {
+      throw new NotFoundException(
+        'Dish has either been deleted or does not exist.',
+      );
     }
-    throw new NotFoundException(
-      'Dish has either been deleted or does not exist.',
-    );
+    return { data: { dish } };
   }
 
   async deleteImg(id: string) {
