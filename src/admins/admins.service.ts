@@ -1,76 +1,75 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { JwtPayload } from 'src/app.models';
+import { PermissionType } from 'src/auth/permissions';
+import { KeyCardsService } from 'src/key-cards/key-cards.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 // import { UpdateAdminDto } from './dto/update-admin.dto';
 
 @Injectable()
 export class AdminsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly KeyCardsService: KeyCardsService,
+  ) {}
 
   async findAll(loggedInUser: JwtPayload) {
-    let admins: {
-      id: string;
-      email: string;
-      name: string;
-      suspended: boolean;
-      _count: { dishes: number };
-    }[];
-    if (loggedInUser.isSystem) {
-      admins = await this.prisma.admin.findMany({
-        select: {
-          _count: { select: { dishes: { where: { dropped: false } } } },
-          name: true,
-          email: true,
-          id: true,
-          suspended: true,
+    const admins = await this.prisma.admin.findMany({
+      select: {
+        _count: {
+          select: {
+            dishes: { where: { dropped: false } },
+          },
         },
-      });
-    } else {
-      admins = await this.prisma.admin.findMany({
-        select: {
-          _count: { select: { dishes: { where: { dropped: false } } } },
-          name: true,
-          email: true,
-          id: true,
-          suspended: true,
-        },
-        where: { isSystem: false },
-      });
-    }
-
+        name: true,
+        email: true,
+        id: true,
+        suspended: true,
+      },
+      where: { isSystem: loggedInUser.isSystem ? undefined : false },
+    });
     return { data: { admins } };
   }
 
   async findOne(loggedInUser: JwtPayload, id: string) {
-    let admin: {
-      name: string;
-      id: string;
-      email: string;
-      joinedAt: Date;
-      suspended: boolean;
-      permissions: string[];
-      isSystem: boolean;
-      keyCardId: string | null;
-    } | null;
-    if (loggedInUser.isSystem) {
-      admin = await this.prisma.admin.findUnique({
-        where: { id },
-        omit: { hash: true },
-      });
-    } else {
-      admin = await this.prisma.admin.findUnique({
-        where: { id, isSystem: false },
-        omit: { hash: true },
-      });
-    }
+    const _admin = await this.prisma.admin.findUnique({
+      where: { id, isSystem: loggedInUser.isSystem ? undefined : false },
+      omit: { hash: true, keyCardId: true, isSystem: true },
+      include: {
+        _count: {
+          select: {
+            dishes: { where: { dropped: false } },
+          },
+        },
+        dishes: {
+          where: { dropped: false },
+          omit: {
+            description: true,
+            available: true,
+            createdAt: true,
+            dropped: true,
+            updatedAt: true,
+            creatorId: true,
+          },
+          include: { imgs: { select: { location: true }, take: 1 } },
+        },
+      },
+    });
 
-    if (!admin) {
+    if (!_admin) {
       throw new NotFoundException('Admin not found.');
     }
+    const admin = {
+      ..._admin,
+      permissions: _admin.permissions.map((p) =>
+        this.KeyCardsService.getPermissionDetails(p as PermissionType),
+      ),
+    };
+
     return { data: { admin } };
   }
 
@@ -78,7 +77,7 @@ export class AdminsService {
   //   return `This action updates a #${id} admin`;
   // }
 
-  async suspend(id: string) {
+  async suspend(loggedInUser: JwtPayload, id: string) {
     const admin = await this.prisma.admin.findUnique({
       where: { id },
     });
@@ -87,6 +86,9 @@ export class AdminsService {
     }
     if (!admin) {
       throw new NotFoundException('Admin not found.');
+    }
+    if (admin.id === loggedInUser.sub) {
+      throw new BadRequestException("Sorry, you can't suspend yourself.");
     }
     await this.prisma.admin.update({
       where: {
@@ -100,12 +102,15 @@ export class AdminsService {
     return { message: 'Admin is now suspended.' };
   }
 
-  async restore(id: string) {
+  async restore(loggedInUser: JwtPayload, id: string) {
     const admin = await this.prisma.admin.findUnique({
       where: { id },
     });
     if (!admin) {
       throw new NotFoundException('Admin not found.');
+    }
+    if (admin.id === loggedInUser.sub) {
+      throw new BadRequestException("Sorry, you can't restore yourself.");
     }
     await this.prisma.admin.update({
       where: {

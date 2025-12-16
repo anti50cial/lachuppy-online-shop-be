@@ -34,14 +34,14 @@ export class AdminsController {
 
   @Get('suspend/:id')
   @HasPermission(PERMISSIONS.MANAGE_ADMINS)
-  suspend(@Param('id') id: string) {
-    return this.adminsService.suspend(id);
+  suspend(@Param('id') id: string, @Req() req: AuthRequest) {
+    return this.adminsService.suspend(req.user, id);
   }
 
   @Get('restore/:id')
   @HasPermission(PERMISSIONS.MANAGE_ADMINS)
-  restore(@Param('id') id: string) {
-    return this.adminsService.restore(id);
+  restore(@Param('id') id: string, @Req() req: AuthRequest) {
+    return this.adminsService.restore(req.user, id);
   }
 
   // @Patch(':id')

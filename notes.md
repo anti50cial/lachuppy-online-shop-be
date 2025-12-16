@@ -1,0 +1,3 @@
+- fix permissions conflict e.g can't view orders, but can edit orders status?
+- rename manage_signup_codes to manage_keycards
+-

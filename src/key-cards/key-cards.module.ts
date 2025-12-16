@@ -7,5 +7,6 @@ import { PrismaModule } from 'src/prisma/prisma.module';
   imports: [PrismaModule],
   controllers: [KeyCardsController],
   providers: [KeyCardsService],
+  exports: [KeyCardsService],
 })
 export class KeyCardsModule {}

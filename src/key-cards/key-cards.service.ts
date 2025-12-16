@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { JwtPayload } from 'src/app.models';
-import { PERMISSION_DETAILS } from 'src/auth/permissions';
+import { PERMISSION_DETAILS, PermissionType } from 'src/auth/permissions';
 import { CreateKeycardDto } from './dto/create-keycard.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { DateTime } from 'luxon';
@@ -76,13 +76,13 @@ export class KeyCardsService {
     }
     const possiblePermissions: typeof PERMISSION_DETAILS = [];
     for (const permission of loggedInUser.permissions) {
-      const _p = PERMISSION_DETAILS.find((p) => p.key === permission);
-      if (!_p) {
+      const permission_details = this.getPermissionDetails(permission);
+      if (!permission_details) {
         throw new BadRequestException(
           'An error has occurred, try contacting the admins',
         );
       }
-      possiblePermissions.push(_p);
+      possiblePermissions.push(permission_details);
     }
     return { data: { possiblePermissions } };
   }
@@ -99,6 +99,14 @@ export class KeyCardsService {
       data: { isValid: false },
     });
     return { message: 'Keycard revoked.' };
+  }
+
+  getPermissionDetails(key: PermissionType) {
+    const permission_details = PERMISSION_DETAILS.find((p) => p.key === key);
+    if (!permission_details) {
+      return false;
+    }
+    return permission_details;
   }
 
   isExpired(keyCard: { expiresAt: Date }) {

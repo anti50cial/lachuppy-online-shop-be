@@ -10,7 +10,7 @@ import { PermissionType } from 'src/auth/permissions';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector) {}
   canActivate(context: ExecutionContext): boolean {
     const requiredPermission = this.reflector.get<PermissionType>(
       'has-permission',
@@ -24,10 +24,14 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
     if (user.permissions.length === 0) {
-      throw new ForbiddenException("You're not allowed to view this resource.");
+      throw new ForbiddenException(
+        'A permission error occured, contact the admins.',
+      );
     }
     if (!user.permissions.includes(requiredPermission)) {
-      throw new ForbiddenException("You're not allowed to view this resource.");
+      throw new ForbiddenException(
+        "You're not allowed to perform this action/view this resource.",
+      );
     }
     return true;
   }
