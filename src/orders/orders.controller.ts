@@ -22,21 +22,21 @@ export class OrdersController {
   }
 
   @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
-  @HasPermission(PERMISSIONS.VIEW_ORDERS)
+  @HasPermission(PERMISSIONS.MANAGE_ORDERS_STATUS)
   @Get('pending')
   findPendingOrders() {
     return this.ordersService.findPendingOrders();
   }
 
   @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
-  @HasPermission(PERMISSIONS.VIEW_ORDERS)
+  @HasPermission(PERMISSIONS.MANAGE_ORDERS_STATUS)
   @Get('processing')
   findProcessingOrders() {
     return this.ordersService.findProcessingOrders();
   }
 
   @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
-  @HasPermission(PERMISSIONS.VIEW_ORDERS)
+  @HasPermission(PERMISSIONS.MANAGE_ORDERS_STATUS)
   @Get('history')
   findOrdersHistory() {
     return this.ordersService.findOrdersHistory();
@@ -49,7 +49,7 @@ export class OrdersController {
   }
 
   @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
-  @HasPermission(PERMISSIONS.MODIFY_ORDERS_STATUS)
+  @HasPermission(PERMISSIONS.MANAGE_ORDERS_STATUS)
   @Get(':id/mark-as/:status')
   markOrder(
     @Param('status') status: 'PROCESSING' | 'COMPLETED' | 'DISMISSED',
@@ -59,7 +59,7 @@ export class OrdersController {
   }
 
   @UseGuards(JwtGuard, SuspensionAccessGuard, PermissionsGuard)
-  @HasPermission(PERMISSIONS.VIEW_ORDERS)
+  @HasPermission(PERMISSIONS.MANAGE_ORDERS_STATUS)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);

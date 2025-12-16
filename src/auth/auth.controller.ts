@@ -5,7 +5,6 @@ import {
   Post,
   Req,
   Res,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -14,9 +13,9 @@ import type { Response } from 'express';
 import type { AuthRequest } from 'src/app.models';
 import { JwtGuard } from 'src/guards/jwt/jwt.guard';
 import { LocalAuthGuard } from 'src/guards/local-auth/local-auth.guard';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('auth')
 export class AuthController {
@@ -32,41 +31,7 @@ export class AuthController {
     @Req() request: AuthRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
-    if (request.user.suspended) {
-      throw new UnauthorizedException(
-        'Your account has been suspended, contact the admins',
-      );
-    }
-    const access_token = await this.authService.signJwt(
-      request.user,
-      this.config.getOrThrow('JWT_EXPIRES_IN'),
-    );
-    const refresh_token = await this.authService.signJwt(request.user, '7D');
-    const message = 'Signed in successfully.';
-    const data = {
-      user: {
-        id: request.user.sub,
-        email: request.user.email,
-        permissions: request.user.permissions,
-        isSystem: request.user.isSystem ? request.user.isSystem : undefined,
-      },
-    };
-    res.cookie('access_token', access_token, {
-      httpOnly: true,
-      secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
-      sameSite: 'lax',
-      path: '/api',
-    });
-    res.cookie('refresh_token', refresh_token, {
-      httpOnly: true,
-      secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
-      sameSite: 'lax',
-      path: '/api',
-    });
-    return {
-      message,
-      data,
-    };
+    return this.authService.signin(request, res);
   }
 
   @UseGuards(AuthGuard('refresh'))
@@ -132,7 +97,7 @@ export class AuthController {
   }
 
   @Post('signup')
-  signup(@Body() data: SignUpDto) {
-    return this.authService.createAdmin(data);
+  signup(@Body() data: SignUpDto, @Res({ passthrough: true }) res: Response) {
+    return this.authService.createAdmin(data, res);
   }
 }

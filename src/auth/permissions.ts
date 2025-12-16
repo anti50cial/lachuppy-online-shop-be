@@ -1,12 +1,11 @@
 export const PERMISSIONS = {
-  MANAGE_SIGNUP_CODES: 'manage_signup_codes',
+  MANAGE_SIGNUP_CODES: 'manage_keycards',
   MANAGE_ADMINS: 'manage_admins',
   VIEW_AUDIT_LOGS: 'view_audit_logs',
   CREATE_DISHES: 'create_dishes',
   UPDATE_DISHES: 'update_dishes',
   DROP_DISHES: 'drop_dishes',
-  VIEW_ORDERS: 'view_orders',
-  MODIFY_ORDERS_STATUS: 'modify_orders_status',
+  MANAGE_ORDERS_STATUS: 'manage_orders',
 } as const;
 
 export const PERMISSION_DETAILS: { key: PermissionType; label: string }[] = [
@@ -35,11 +34,7 @@ export const PERMISSION_DETAILS: { key: PermissionType; label: string }[] = [
     label: 'Delete dishes.',
   },
   {
-    key: PERMISSIONS.VIEW_ORDERS,
-    label: 'View order details.',
-  },
-  {
-    key: PERMISSIONS.MODIFY_ORDERS_STATUS,
+    key: PERMISSIONS.MANAGE_ORDERS_STATUS,
     label: 'View and modify order status.',
   },
 ];

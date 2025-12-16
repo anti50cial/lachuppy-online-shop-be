@@ -12,7 +12,7 @@ export interface JwtPayload {
   email: string;
   permissions: PermissionType[];
   isSystem?: boolean;
-  suspended: boolean;
+  suspended?: boolean;
 }
 export interface AuthRequest extends Request {
   user: JwtPayload;

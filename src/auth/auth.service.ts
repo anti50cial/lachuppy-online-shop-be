@@ -8,18 +8,21 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as argon from 'argon2';
-import { JwtPayload } from 'src/app.models';
+import type { Response } from 'express';
+import { JwtPayload, type AuthRequest } from 'src/app.models';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SignInDto } from './dto/signin.dto';
 import { SignUpDto } from './dto/signup.dto';
 import { PermissionType } from './permissions';
+import { KeyCardsService } from 'src/key-cards/key-cards.service';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
   constructor(
-    private prisma: PrismaService,
-    private jwt: JwtService,
-    private config: ConfigService,
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly config: ConfigService,
+    private readonly KeyCardsService: KeyCardsService,
   ) {}
 
   async signJwt(data: JwtPayload, expiry?: any) {
@@ -33,6 +36,44 @@ export class AuthService implements OnModuleInit {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       { expiresIn: expiry },
     );
+  }
+
+  async signin(request: AuthRequest, res: Response) {
+    if (request.user.suspended) {
+      throw new UnauthorizedException(
+        'Your account has been suspended, contact the admins.',
+      );
+    }
+    const access_token = await this.signJwt(
+      request.user,
+      this.config.getOrThrow('JWT_EXPIRES_IN'),
+    );
+    const refresh_token = await this.signJwt(request.user, '7D');
+    const message = 'Signed in successfully.';
+    const data = {
+      user: {
+        id: request.user.sub,
+        email: request.user.email,
+        permissions: request.user.permissions,
+        isSystem: request.user.isSystem ? request.user.isSystem : undefined,
+      },
+    };
+    res.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
+      sameSite: 'lax',
+      path: '/api',
+    });
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
+      sameSite: 'lax',
+      path: '/api',
+    });
+    return {
+      message,
+      data,
+    };
   }
 
   async validateUser(data: SignInDto): Promise<JwtPayload | null> {
@@ -62,7 +103,7 @@ export class AuthService implements OnModuleInit {
     return null;
   }
 
-  async createAdmin(data: SignUpDto) {
+  async createAdmin(data: SignUpDto, res: Response) {
     const { keyCard, email, name, password, cpassword } = data;
     const verifiedKeyCard = await this.prisma.keyCard.findUnique({
       where: {
@@ -91,16 +132,64 @@ export class AuthService implements OnModuleInit {
             permissions: verifiedKeyCard.permissions,
             keyCard: { connect: { id: verifiedKeyCard.id } },
           },
-          select: { name: true, email: true },
+          select: {
+            email: true,
+            id: true,
+            permissions: true,
+            isSystem: true,
+            suspended: true,
+          },
         }),
         this.prisma.keyCard.update({
           where: { code: verifiedKeyCard.code },
           data: { isUsed: true },
         }),
       ]);
+      const permissions = newUser.permissions.map((p) => {
+        const _p = this.KeyCardsService.getPermissionDetails(
+          p as PermissionType,
+        );
+        if (!_p) {
+          throw new BadRequestException(
+            'An error occured, try contacting the admins.',
+          );
+        }
+        return _p.key;
+      });
+      const user = {
+        ...newUser,
+        sub: newUser.id,
+        permissions,
+      };
+      const access_token = await this.signJwt(
+        user,
+        this.config.getOrThrow('JWT_EXPIRES_IN'),
+      );
+      const refresh_token = await this.signJwt(user, '7D');
+
+      res.cookie('access_token', access_token, {
+        httpOnly: true,
+        secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
+        sameSite: 'lax',
+        path: '/api',
+      });
+      res.cookie('refresh_token', refresh_token, {
+        httpOnly: true,
+        secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
+        sameSite: 'lax',
+        path: '/api',
+      });
 
       return {
-        message: `Admin '${newUser.name}' created successfully, proceed to sign in`,
+        message: `New admin created successfully, proceed to sign in`,
+        data: {
+          user: {
+            id: user.sub,
+            email: user.email,
+            permissions: user.permissions,
+            isSystem: user.isSystem ? user.isSystem : undefined,
+          },
+        },
       };
     } catch (error) {
       console.log(error);
