@@ -49,7 +49,7 @@ export class PaystackService implements OnModuleInit {
           };
         }>(
           `${this.paystackApiUrl}/initialize`,
-          { ...data, amount: data.amount * 100 },
+          { ...data, amount: Math.ceil(data.amount * 100) },
           { headers },
         ),
       );

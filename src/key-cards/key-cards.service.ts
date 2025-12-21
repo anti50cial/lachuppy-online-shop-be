@@ -1,35 +1,25 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { JwtPayload } from 'src/app.models';
-import { PERMISSION_DETAILS, PermissionType } from 'src/auth/permissions';
-import { CreateKeycardDto } from './dto/create-keycard.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { DateTime } from 'luxon';
 import * as crypto from 'crypto';
+import { DateTime } from 'luxon';
+import { JwtPayload } from 'src/app.models';
+import { PERMISSION_DETAILS } from 'src/auth/permissions';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateKeycardDto } from './dto/create-keycard.dto';
 
 @Injectable()
 export class KeyCardsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async generate(loggedInUser: JwtPayload, data: CreateKeycardDto) {
-    const permissionsToGrant = data.permissions;
-    const possiblePermissions =
-      this.getPossiblePermissions(loggedInUser).data.possiblePermissions;
+  async generate(loggedInUser: JwtPayload, createKeycardDto: CreateKeycardDto) {
+    const permissionsToGrant = createKeycardDto.permissions;
     if (permissionsToGrant.length === 0) {
       throw new BadRequestException(
         'Every keycard must have at least one permission',
       );
-    }
-    for (const permission of permissionsToGrant) {
-      if (!possiblePermissions.find((p) => p.key === permission)) {
-        throw new ForbiddenException(
-          "You cannot grant permissions you don't have.",
-        );
-      }
     }
 
     const keycard = crypto.randomBytes(10).toString('hex');
@@ -70,23 +60,6 @@ export class KeyCardsService {
     return { data: { keycards } };
   }
 
-  getPossiblePermissions(loggedInUser: JwtPayload) {
-    if (loggedInUser.isSystem) {
-      return { data: { possiblePermissions: PERMISSION_DETAILS } };
-    }
-    const possiblePermissions: typeof PERMISSION_DETAILS = [];
-    for (const permission of loggedInUser.permissions) {
-      const permission_details = this.getPermissionDetails(permission);
-      if (!permission_details) {
-        throw new BadRequestException(
-          'An error has occurred, try contacting the admins',
-        );
-      }
-      possiblePermissions.push(permission_details);
-    }
-    return { data: { possiblePermissions } };
-  }
-
   async revokeKeyCard(id: string) {
     const keyCard = await this.prisma.keyCard.findUnique({
       where: { id, isUsed: false, isValid: true },
@@ -99,14 +72,6 @@ export class KeyCardsService {
       data: { isValid: false },
     });
     return { message: 'Keycard revoked.' };
-  }
-
-  getPermissionDetails(key: PermissionType) {
-    const permission_details = PERMISSION_DETAILS.find((p) => p.key === key);
-    if (!permission_details) {
-      return false;
-    }
-    return permission_details;
   }
 
   isExpired(keyCard: { expiresAt: Date }) {

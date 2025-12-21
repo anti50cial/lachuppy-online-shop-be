@@ -1,7 +1,8 @@
 export const PERMISSIONS = {
-  MANAGE_KEYCARDS: 'manage_keycards',
-  MANAGE_ADMINS: 'manage_admins',
-  VIEW_AUDIT_LOGS: 'view_audit_logs',
+  // MANAGE_KEYCARDS: 'manage_keycards',
+  // MANAGE_ADMINS: 'manage_admins',
+  // VIEW_AUDIT_LOGS: 'view_audit_logs',
+  IS_HIGH_LEVEL: 'is_high_level',
   CREATE_DISHES: 'create_dishes',
   UPDATE_DISHES: 'update_dishes',
   DROP_DISHES: 'drop_dishes',
@@ -9,17 +10,22 @@ export const PERMISSIONS = {
 } as const;
 
 export const PERMISSION_DETAILS: { key: PermissionType; label: string }[] = [
+  // {
+  //   key: PERMISSIONS.MANAGE_KEYCARDS,
+  //   label: 'Generate and invalidate access codes for new admins.',
+  // },
+  // {
+  //   key: PERMISSIONS.MANAGE_ADMINS,
+  //   label: "Suspend or restore and modify other admins' permissions.",
+  // },
+  // {
+  //   key: PERMISSIONS.VIEW_AUDIT_LOGS,
+  //   label: 'See who did what (generatorId relations)',
+  // },
   {
-    key: PERMISSIONS.MANAGE_KEYCARDS,
-    label: 'Generate and invalidate access codes for new admins.',
-  },
-  {
-    key: PERMISSIONS.MANAGE_ADMINS,
-    label: 'Suspend or restore lower-level admins',
-  },
-  {
-    key: PERMISSIONS.VIEW_AUDIT_LOGS,
-    label: 'See who did what (generatorId relations)',
+    key: PERMISSIONS.IS_HIGH_LEVEL,
+    label:
+      'Perform any action regardless of other permissions(High level admin)',
   },
   {
     key: PERMISSIONS.CREATE_DISHES,

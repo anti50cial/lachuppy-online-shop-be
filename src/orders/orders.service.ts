@@ -36,9 +36,9 @@ export class OrdersService {
   async initialize(initializePaymentDto: InitializePaymentDto) {
     let totalPrice: number = 0;
     const cartItems = initializePaymentDto.cart;
-    if (cartItems.length === 0) {
-      throw new BadRequestException('Cart is empty, nothing to checkout.');
-    }
+    // if (cartItems.length === 0) {
+    //   throw new BadRequestException('Cart is empty, nothing to checkout.');
+    // }
     const orderItems: {
       priceAtPurchase: number;
       dishId: string;
@@ -85,7 +85,7 @@ export class OrdersService {
 
   async complete(ref: string) {
     if (ref.length === 0) {
-      throw new BadRequestException('Transaction is empty');
+      throw new BadRequestException('Transaction reference is empty');
     }
     const order = await this.prisma.order.findUnique({
       where: { txreference: ref },
@@ -101,7 +101,7 @@ export class OrdersService {
 
     if (
       transaction.data.status !== 'success' ||
-      transaction.data.amount !== Number(order.totalPrice) * 100
+      transaction.data.amount !== Math.ceil(order.totalPrice.toNumber() * 100)
     ) {
       throw new BadRequestException(
         'Payment could not be verified, contact admins or try again.',

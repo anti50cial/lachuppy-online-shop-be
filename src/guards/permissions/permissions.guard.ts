@@ -6,12 +6,16 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthRequest } from 'src/app.models';
-import { PermissionType } from 'src/auth/permissions';
+import { PERMISSIONS, PermissionType } from 'src/auth/permissions';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
-  canActivate(context: ExecutionContext): boolean {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly prisma: PrismaService,
+  ) {}
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredPermission = this.reflector.get<PermissionType>(
       'has-permission',
       context.getHandler(),
@@ -19,8 +23,13 @@ export class PermissionsGuard implements CanActivate {
     if (!requiredPermission) {
       return true;
     }
-    const { user } = context.switchToHttp().getRequest<AuthRequest>();
-    if (user.isSystem) {
+    const { user: sessionUser } = context
+      .switchToHttp()
+      .getRequest<AuthRequest>();
+    const user = await this.prisma.admin.findUniqueOrThrow({
+      where: { id: sessionUser.sub },
+    });
+    if (user.isSystem || user.permissions.includes(PERMISSIONS.IS_HIGH_LEVEL)) {
       return true;
     }
     if (user.permissions.length === 0) {

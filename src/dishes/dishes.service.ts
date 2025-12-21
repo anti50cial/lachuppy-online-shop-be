@@ -3,11 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { JwtPayload } from 'src/app.models';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDishDto } from './dto/create-dish.dto';
 import { UpdateDishDto } from './dto/update-dish.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { JwtPayload } from 'src/app.models';
-import { Decimal } from '@prisma/client/runtime/client';
 
 @Injectable()
 export class DishesService {
@@ -42,52 +41,25 @@ export class DishesService {
   }
 
   async findAll(admin?: boolean) {
-    let dishes: ({ imgs: { location: string }[] } & {
-      id: string;
-      name: string;
-      description: string;
-      price: Decimal;
-    })[];
-
-    if (admin) {
-      dishes = await this.prisma.dish.findMany({
-        where: { dropped: false },
-        omit: {
-          dropped: true,
-          creatorId: true,
-          createdAt: true,
-          updatedAt: true,
-          available: true,
+    const dishes = await this.prisma.dish.findMany({
+      where: { dropped: false, available: admin ? undefined : true },
+      omit: {
+        dropped: true,
+        creatorId: true,
+        createdAt: true,
+        updatedAt: true,
+        available: true,
+      },
+      orderBy: { name: 'asc' },
+      include: {
+        imgs: {
+          select: { location: true },
+          where: { dropped: false },
+          orderBy: { location: 'desc' },
+          take: 1,
         },
-        orderBy: { name: 'asc' },
-        include: {
-          imgs: {
-            select: { location: true },
-            where: { dropped: false },
-            take: 1,
-          },
-        },
-      });
-    } else {
-      dishes = await this.prisma.dish.findMany({
-        where: { dropped: false, available: true },
-        omit: {
-          dropped: true,
-          creatorId: true,
-          createdAt: true,
-          updatedAt: true,
-          available: true,
-        },
-        orderBy: { name: 'asc' },
-        include: {
-          imgs: {
-            select: { location: true },
-            where: { dropped: false },
-            take: 1,
-          },
-        },
-      });
-    }
+      },
+    });
     return { data: { dishes } };
   }
 
@@ -102,48 +74,18 @@ export class DishesService {
   }
 
   async findOne(id: string, admin?: boolean) {
-    let dish: {
-      imgs: {
-        id: string;
-        dropped: boolean;
-        location: string;
-        dishId: string;
-      }[];
-      creator: { name: string } | null;
-      id: string;
-      name: string;
-      description: string;
-      price: Decimal;
-      createdAt: Date;
-      updatedAt: Date;
-      available: boolean;
-      dropped: boolean;
-    } | null;
-    if (admin) {
-      dish = await this.prisma.dish.findUnique({
-        where: { id, dropped: false },
-        omit: { creatorId: true },
-        include: {
-          imgs: {
-            omit: { dishId: true, dropped: true },
-            where: { dropped: false },
-          },
-          creator: { select: { name: true } },
+    const dish = await this.prisma.dish.findUnique({
+      where: { id, dropped: false, available: admin ? undefined : true },
+      omit: { creatorId: true },
+      include: {
+        imgs: {
+          omit: { dishId: true, dropped: true },
+          where: { dropped: false },
         },
-      });
-    } else {
-      dish = await this.prisma.dish.findUnique({
-        where: { id, dropped: false, available: true },
-        omit: { creatorId: true },
-        include: {
-          imgs: {
-            omit: { dishId: true, dropped: true },
-            where: { dropped: false },
-          },
-          creator: { select: { name: true } },
-        },
-      });
-    }
+        creator: admin ? { select: { name: true } } : false,
+      },
+    });
+
     if (!dish) {
       throw new NotFoundException(
         'Dish has either been deleted or does not exist.',

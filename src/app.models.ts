@@ -10,7 +10,7 @@ import { PermissionType } from './auth/permissions';
 export interface JwtPayload {
   sub: string;
   email: string;
-  permissions: PermissionType[];
+  permissions?: PermissionType[];
   isSystem?: boolean;
   suspended?: boolean;
 }

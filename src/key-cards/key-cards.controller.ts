@@ -21,24 +21,19 @@ import { SuspensionAccessGuard } from 'src/guards/suspension-access/suspension-a
 export class KeyCardsController {
   constructor(private readonly keyCardsService: KeyCardsService) {}
 
+  @HasPermission(PERMISSIONS.IS_HIGH_LEVEL)
   @Post('generate')
-  @HasPermission(PERMISSIONS.MANAGE_KEYCARDS)
   generate(@Request() req: AuthRequest, @Body() data: CreateKeycardDto) {
     return this.keyCardsService.generate(req.user, data);
   }
 
+  @HasPermission(PERMISSIONS.IS_HIGH_LEVEL)
   @Get()
-  @HasPermission(PERMISSIONS.MANAGE_KEYCARDS)
   getKeycards() {
     return this.keyCardsService.getKeycards();
   }
 
-  @Get('possible-permissions')
-  @HasPermission(PERMISSIONS.MANAGE_KEYCARDS)
-  getPossiblePermissions(@Request() req: AuthRequest) {
-    return this.keyCardsService.getPossiblePermissions(req.user);
-  }
-
+  @HasPermission(PERMISSIONS.IS_HIGH_LEVEL)
   @Get('revoke/:id')
   revokeKeyCard(@Param('id') id: string) {
     return this.keyCardsService.revokeKeyCard(id);

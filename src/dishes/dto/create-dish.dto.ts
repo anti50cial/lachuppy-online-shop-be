@@ -8,9 +8,9 @@ import {
 } from 'class-validator';
 
 export class CreateDishDto {
-  @IsString()
   @MaxLength(100)
   @MinLength(3)
+  @IsString()
   @IsNotEmpty()
   name: string;
   @Type(() => Number)

@@ -16,6 +16,7 @@ import { LocalAuthGuard } from 'src/guards/local-auth/local-auth.guard';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
+import { DateTime } from 'luxon';
 
 @Controller('auth')
 export class AuthController {
@@ -58,6 +59,7 @@ export class AuthController {
       secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
       sameSite: 'lax',
       path: '/api',
+      expires: DateTime.now().plus({ days: 7 }).toJSDate(),
     });
     const user = await this.prisma.admin.findUnique({
       where: { id: request.user.sub },
@@ -78,6 +80,7 @@ export class AuthController {
     const message = 'Session refreshed successfully';
     return { data, message };
   }
+
   @UseGuards(JwtGuard)
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {

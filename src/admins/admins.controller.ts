@@ -1,6 +1,5 @@
 import {
   Controller,
-  Delete,
   Get,
   Param,
   Req,
@@ -21,25 +20,29 @@ export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}
 
   @Get()
-  @HasPermission(PERMISSIONS.MANAGE_ADMINS)
+  @HasPermission(PERMISSIONS.IS_HIGH_LEVEL)
   findAll(@Request() req: AuthRequest) {
     return this.adminsService.findAll(req.user);
   }
+  @Get('me')
+  findMe(@Req() req: AuthRequest) {
+    return this.adminsService.findMe(req.user);
+  }
 
   @Get(':id')
-  @HasPermission(PERMISSIONS.MANAGE_ADMINS)
+  @HasPermission(PERMISSIONS.IS_HIGH_LEVEL)
   findOne(@Param('id') id: string, @Req() req: AuthRequest) {
     return this.adminsService.findOne(req.user, id);
   }
 
   @Get('suspend/:id')
-  @HasPermission(PERMISSIONS.MANAGE_ADMINS)
+  @HasPermission(PERMISSIONS.IS_HIGH_LEVEL)
   suspend(@Param('id') id: string, @Req() req: AuthRequest) {
     return this.adminsService.suspend(req.user, id);
   }
 
   @Get('restore/:id')
-  @HasPermission(PERMISSIONS.MANAGE_ADMINS)
+  @HasPermission(PERMISSIONS.IS_HIGH_LEVEL)
   restore(@Param('id') id: string, @Req() req: AuthRequest) {
     return this.adminsService.restore(req.user, id);
   }
@@ -49,9 +52,9 @@ export class AdminsController {
   //   return this.adminsService.update(+id, updateAdminDto);
   // }
 
-  @Delete(':id')
-  @HasPermission(PERMISSIONS.MANAGE_ADMINS)
-  remove(@Param('id') id: string) {
-    return this.adminsService.remove(+id);
-  }
+  // @Delete(':id')
+  // @HasPermission(PERMISSIONS.IS_HIGH_LEVEL)
+  // remove(@Param('id') id: string) {
+  //   return this.adminsService.remove(+id);
+  // }
 }

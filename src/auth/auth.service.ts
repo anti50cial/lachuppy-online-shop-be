@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   OnModuleInit,
@@ -15,6 +16,7 @@ import { SignInDto } from './dto/signin.dto';
 import { SignUpDto } from './dto/signup.dto';
 import { PermissionType } from './permissions';
 import { KeyCardsService } from 'src/key-cards/key-cards.service';
+import { DateTime } from 'luxon';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -30,7 +32,7 @@ export class AuthService implements OnModuleInit {
       {
         sub: data.sub,
         email: data.email,
-        permissions: data.permissions,
+        // permissions: data.permissions,
         isSystem: data.isSystem ? data.isSystem : undefined,
       },
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -69,6 +71,7 @@ export class AuthService implements OnModuleInit {
       secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
       sameSite: 'lax',
       path: '/api',
+      expires: DateTime.now().plus({ days: 7 }).toJSDate(),
     });
     return {
       message,
@@ -118,8 +121,18 @@ export class AuthService implements OnModuleInit {
     }
     if (!verifiedKeyCard) {
       throw new UnauthorizedException(
-        'Invalid access code provided, contact admins!',
+        'Invalid keycard provided, contact admins!',
       );
+    }
+    const adminExists = await this.prisma.admin.findUnique({
+      where: { email },
+    });
+    if (adminExists) {
+      throw new ConflictException('Admin with same email already exists.');
+    }
+
+    if (this.KeyCardsService.isExpired(verifiedKeyCard)) {
+      throw new UnauthorizedException('The provided keycard is expired.');
     }
     const hash = await argon.hash(password, { type: argon.argon2id });
     try {
@@ -145,21 +158,20 @@ export class AuthService implements OnModuleInit {
           data: { isUsed: true },
         }),
       ]);
-      const permissions = newUser.permissions.map((p) => {
-        const _p = this.KeyCardsService.getPermissionDetails(
-          p as PermissionType,
-        );
-        if (!_p) {
-          throw new BadRequestException(
-            'An error occured, try contacting the admins.',
-          );
-        }
-        return _p.key;
-      });
-      const user = {
-        ...newUser,
+      // const permissions = newUser.permissions.map((p) => {
+      //   const _p = this.PermissionsService.getPermissionDetails(
+      //     p as PermissionType,
+      //   );
+      //   if (!_p) {
+      //     throw new BadRequestException(
+      //       'An error occured, try contacting the admins.',
+      //     );
+      //   }
+      //   return _p.key;
+      // });
+      const user: JwtPayload = {
+        email: newUser.email,
         sub: newUser.id,
-        permissions,
       };
       const access_token = await this.signJwt(
         user,
@@ -178,6 +190,7 @@ export class AuthService implements OnModuleInit {
         secure: this.config.getOrThrow('NODE_ENV') === 'PRODUCTION',
         sameSite: 'lax',
         path: '/api',
+        expires: DateTime.now().plus({ days: 7 }).toJSDate(),
       });
 
       return {
